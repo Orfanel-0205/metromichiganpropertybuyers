@@ -1,0 +1,60 @@
+# ===========================
+# DEPENDENCIES
+# ===========================
+node_modules/
+jspm_packages/
+.pnp
+.pnp.js
+
+# ===========================
+# ENVIRONMENT / SECRETS
+# ===========================
+# .env.example is tracked on purpose; real values never are.
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+*.pem
+*.key
+
+# ===========================
+# LOGS & RUNTIME
+# ===========================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pids/
+*.pid
+*.seed
+
+# ===========================
+# BUILD / DEPLOY ARTIFACTS
+# ===========================
+dist/
+build/
+.cache/
+.vercel
+.netlify
+
+# ===========================
+# EDITOR & OS
+# ===========================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.qodo/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# ===========================
+# TESTING
+# ===========================
+coverage/
+.nyc_output/

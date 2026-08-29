@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Get your free cash offer for your house today. Fill out our simple form and receive an offer within 24 hours.">
+    <meta name="keywords" content="sell my house, get a cash offer, sell house for cash, free home offer, submit property details">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://michiganpropertybuyers.vercel.app/pages/sell-your-house/sell">
+    <meta property="og:title" content="Sell Your House | Metro Michigan Property Buyers">
+    <meta property="og:description" content="Get your free cash offer for your house today. Fill out our simple form and receive an offer within 24 hours.">
+    <meta property="og:image" content="https://michiganpropertybuyers.vercel.app/assets/img/MMP-BG.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://michiganpropertybuyers.vercel.app/pages/sell-your-house/sell">
+    <meta property="twitter:title" content="Sell Your House | Metro Michigan Property Buyers">
+    <meta property="twitter:description" content="Get your free cash offer for your house today. Fill out our simple form and receive an offer within 24 hours.">
+    <meta property="twitter:image" content="https://michiganpropertybuyers.vercel.app/assets/img/MMP-BG.png">
+    <title>Sell Your House | Metro Michigan Property Buyers</title>
+    <link rel="stylesheet" href="./assets/css/style.css">
+    <link rel="stylesheet" href="./assets/css/form.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">
+                    <span class="logo-icon"></span>
+                    <span class="logo-text">METRO MICHIGAN PROPERTY BUYERS</span>
+                </div>
+                <button class="mobile-menu-toggle" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="../how-it-works/how-it-works">How It Works</a></li>
+                    <li><a href="../sell-your-house/sell">Sell Your House</a></li>
+                    <li><a href="../testimonials/testimonials">Testimonials</a></li>
+                    <li><a href="../faq/faq">FAQ</a></li>
+                    <li><a href="../about/about">About Us</a></li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Lead Form Section -->
+    <section class="lead-form-section">
+        <div class="container">
+            <div class="form-layout">
+                <!-- Left Column - Value Proposition -->
+                <div class="form-value">
+                    <h1 class="form-page-title">Get Your Cash Offer in 24 Hours</h1>
+                    <p class="form-page-subtitle">Fill out the form below and we'll contact you with a fair, no-obligation cash offer for your home.</p>
+                    
+                    <div class="value-points">
+                        <div class="value-point">
+                            <span class="value-icon">✓</span>
+                            <div>
+                                <h3>No Obligation</h3>
+                                <p>Get your offer with zero commitment. You decide if it's right for you.</p>
+                            </div>
+                        </div>
+                        <div class="value-point">
+                            <span class="value-icon">✓</span>
+                            <div>
+                                <h3>Fast Response</h3>
+                                <p>We'll review your property and respond within 24 hours.</p>
+                            </div>
+                        </div>
+                        <div class="value-point">
+                            <span class="value-icon">✓</span>
+                            <div>
+                                <h3>Any Condition</h3>
+                                <p>We buy houses as-is. No repairs or cleaning needed.</p>
+                            </div>
+                        </div>
+                        <div class="value-point">
+                            <span class="value-icon">✓</span>
+                            <div>
+                                <h3>Your Timeline</h3>
+                                <p>Close in 7 days or choose a date that works for you.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="trust-section">
+                        <h4>Trusted by Homeowners Nationwide</h4>
+                        <div class="trust-stats">
+                            <div class="stat">
+                                <div class="stat-number">500+</div>
+                                <div class="stat-label">Houses Bought</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number">$50M+</div>
+                                <div class="stat-label">Paid to Sellers</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number">4.9★</div>
+                                <div class="stat-label">Average Rating</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Lead Form -->
+                <div class="form-container">
+                    <div class="form-card">
+                        <div class="form-header">
+                            <h2>Tell Us About Your Property</h2>
+                            <p>Takes less than 60 seconds</p>
+                        </div>
+
+                        <form id="leadCaptureForm" class="lead-form">
+                            <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px" />
+                            <!-- Progress Indicator -->
+                            <div class="form-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                </div>
+                                <div class="progress-text" id="progressText">Step 1 of 3</div>
+                            </div>
+
+                            <!-- Step 1: Property Information -->
+                            <div class="form-step active" data-step="1">
+                                <h3 class="step-title">Property Details</h3>
+                                
+                                <div class="form-group">
+                                    <label for="propertyAddress">Property Address *</label>
+                                    <input type="text" id="propertyAddress" name="propertyAddress" required 
+                                           placeholder="123 Main St, City, State ZIP">
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="propertyType">Property Type *</label>
+                                        <select id="propertyType" name="propertyType" required>
+                                            <option value="">Select...</option>
+                                            <option value="Single Family">Single Family</option>
+                                            <option value="Multi-Family">Multi-Family</option>
+                                            <option value="Condo">Condo</option>
+                                            <option value="Townhouse">Townhouse</option>
+                                            <option value="Mobile Home">Mobile Home</option>
+                                            <option value="Land">Land</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="propertyCondition">Property Condition *</label>
+                                        <select id="propertyCondition" name="propertyCondition" required>
+                                            <option value="">Select...</option>
+                                            <option value="Excellent">Excellent</option>
+                                            <option value="Good">Good</option>
+                                            <option value="Fair">Fair</option>
+                                            <option value="Needs Work">Needs Work</option>
+                                            <option value="Poor">Poor</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="bedrooms">Bedrooms</label>
+                                        <input type="number" id="bedrooms" name="bedrooms" min="0" placeholder="0">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="bathrooms">Bathrooms</label>
+                                        <input type="number" id="bathrooms" name="bathrooms" min="0" step="0.5" placeholder="0">
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn btn-primary btn-block btn-next">Next Step →</button>
+                            </div>
+
+                            <!-- Step 2: Situation & Timeline -->
+                            <div class="form-step" data-step="2">
+                                <h3 class="step-title">Your Situation</h3>
+
+                                <div class="form-group">
+                                    <label for="sellingReason">Why are you selling? *</label>
+                                    <select id="sellingReason" name="sellingReason" required>
+                                        <option value="">Select...</option>
+                                        <option value="Relocating">Relocating</option>
+                                        <option value="Downsizing">Downsizing</option>
+                                        <option value="Inherited Property">Inherited Property</option>
+                                        <option value="Divorce">Divorce</option>
+                                        <option value="Foreclosure">Facing Foreclosure</option>
+                                        <option value="Tired Landlord">Tired Landlord</option>
+                                        <option value="Financial Hardship">Financial Hardship</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="timeframe">When do you need to sell? *</label>
+                                    <select id="timeframe" name="timeframe" required>
+                                        <option value="">Select...</option>
+                                        <option value="ASAP">As Soon As Possible</option>
+                                        <option value="1-2 weeks">1-2 Weeks</option>
+                                        <option value="1 month">1 Month</option>
+                                        <option value="2-3 months">2-3 Months</option>
+                                        <option value="Flexible">Flexible</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="oweMortgage">Do you owe money on the property?</label>
+                                    <select id="oweMortgage" name="oweMortgage">
+                                        <option value="">Select...</option>
+                                        <option value="Yes">Yes</option>
+                                        <option value="No">No - Paid Off</option>
+                                        <option value="Not Sure">Not Sure</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="additionalInfo">Additional Details (Optional)</label>
+                                    <textarea id="additionalInfo" name="additionalInfo" rows="3" 
+                                              placeholder="Tell us anything else about your property or situation..."></textarea>
+                                </div>
+
+                                <div class="form-buttons">
+                                    <button type="button" class="btn btn-secondary btn-back">← Back</button>
+                                    <button type="button" class="btn btn-primary btn-next">Next Step →</button>
+                                </div>
+                            </div>
+
+                            <!-- Step 3: Contact Information -->
+                            <div class="form-step" data-step="3">
+                                <h3 class="step-title">Contact Information</h3>
+
+                                <div class="form-group">
+                                    <label for="fullName">Full Name *</label>
+                                    <input type="text" id="fullName" name="fullName" required 
+                                           placeholder="John Doe">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="email">Email Address *</label>
+                                    <input type="email" id="email" name="email" required 
+                                           placeholder="john@example.com">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="phone">Phone Number *</label>
+                                    <input type="tel" id="phone" name="phone" required 
+                                       placeholder="(555) 123-4567">
+
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="preferredContact">Preferred Contact Method *</label>
+                                    <select id="preferredContact" name="preferredContact" required>
+                                        <option value="">Select...</option>
+                                        <option value="Phone">Phone</option>
+                                        <option value="Email">Email</option>
+                                        <option value="Text">Text Message</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="smsConsent" name="smsConsent">
+                                        <span>I consent to receive text messages about my cash offer. Standard message and data rates may apply. You can opt out anytime.</span>
+                                    </label>
+                                </div>
+
+                                <!-- Hidden tracking fields -->
+                                <input type="hidden" id="gclid" name="gclid">
+                                <input type="hidden" id="fbclid" name="fbclid">
+                                <input type="hidden" id="utm_source" name="utm_source">
+                                <input type="hidden" id="utm_medium" name="utm_medium">
+                                <input type="hidden" id="utm_campaign" name="utm_campaign">
+                                <input type="hidden" id="referrer" name="referrer">
+
+                                <div class="form-buttons">
+                                    <button type="button" class="btn btn-secondary btn-back">← Back</button>
+                                    <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+                                        <span class="btn-text">Get My Cash Offer</span>
+                                        <span class="btn-loader" style="display: none;">Submitting...</span>
+                                    </button>
+                                </div>
+
+                                <p class="form-disclaimer">
+                                    By submitting this form, you agree to our <a href="../legal/privacy">Privacy Policy</a> 
+                                    and <a href="../legal/terms">Terms of Service</a>. We will never share your information.
+                                </p>
+                            </div>
+                        </form>
+
+                        <!-- Success Message (hidden by default) -->
+                        <div id="successMessage" class="success-message" style="display: none;">
+                            <div class="success-icon">✓</div>
+                            <h2>Thank You!</h2>
+                            <p>We've received your information and will contact you within 24 hours with your cash offer.</p>
+                            <p class="success-subtext">Check your email for a confirmation message.</p>
+                            <a href="/" class="btn btn-primary">Return to Home</a>
+                        </div>
+
+                        <!-- Error Message (hidden by default) -->
+                        <div id="errorMessage" class="error-message" style="display: none;">
+                            <div class="error-icon">✕</div>
+                            <h2>Oops! Something went wrong</h2>
+                            <p id="errorText">Please try again or contact us directly at (517) 500-8870</p>
+                            <button class="btn btn-primary" onclick="location.reload()">Try Again</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>METRO MICHIGAN PROPERTY BUYERS</h4>
+                    <p>We buy houses for cash across the United States. Fair offers, fast closings, no hassles.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="../how-it-works/how-it-works">How It Works</a></li>
+                        <li><a href="../sell-your-house/sell">Sell Your House</a></li>
+                        <li><a href="../faq/faq">FAQ</a></li>
+                        <li><a href="../about/about">About Us</a></li>
+                        <li><a href="../contact/contact">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li>📧 offer@metromichiganpropertybuyers.com</li>
+                        <li>📞 (517) 500-8870</li>
+                        <li>📍 Available Nationwide</li>
+                        <li>📱 <a href="https://www.facebook.com/profile.php?id=61593816036842" target="_blank" rel="noopener">Facebook</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 METRO MICHIGAN PROPERTY BUYERS. All rights reserved. | <a href="../legal/privacy">Privacy Policy</a> | <a href="../legal/terms">Terms of Service</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/assets/js/config.js"></script>
+    <script src="./assets/js/Main.js"></script>
+    <script src="./assets/js/Form.js"></script>
+    <script src="/assets/js/chat-widget.js" defer></script>
+</body>
+</html>

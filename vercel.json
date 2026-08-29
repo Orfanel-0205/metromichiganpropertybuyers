@@ -1,0 +1,65 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/pages/how-it-works/How%20It%20Works.Html",
+      "destination": "/pages/how-it-works/how-it-works",
+      "permanent": true
+    },
+    {
+      "source": "/pages/testimonials/Testimonials.html",
+      "destination": "/pages/testimonials/testimonials",
+      "permanent": true
+    },
+    {
+      "source": "/privacy.html",
+      "destination": "/pages/legal/privacy",
+      "permanent": true
+    },
+    {
+      "source": "/terms.html",
+      "destination": "/pages/legal/terms",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
+    }
+  ]
+}

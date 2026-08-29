@@ -1,0 +1,16 @@
+# The Express API deploys to Render, not Vercel. Keeping it out of the static
+# build also keeps .env files and server code off the CDN.
+backend/
+node_modules/
+test/
+.qodo/
+verify-data.mongodb.js
+*.log
+
+# Never ship secrets to the CDN, even if one is left lying around locally.
+.env
+.env.*
+
+# NOTE: pages/admin/ is deliberately NOT ignored. The dashboard is static HTML
+# that authenticates against the Render API with a JWT, so it ships with the
+# site. robots.txt disallows it, and every lead endpoint it calls requires auth.

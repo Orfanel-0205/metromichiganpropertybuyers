@@ -1,0 +1,51 @@
+{
+  "name": "cash-home-buyer-website",
+  "version": "2.0.0",
+  "description": "Real Estate Lead Generation System with ClickSend SMS",
+  "main": "Server.js",
+  "scripts": {
+    "start": "node Server.js",
+    "dev": "nodemon Server.js",
+    "init": "node Init.js",
+    "test-sms": "node test-sms.js",
+    "test-email": "node test-email.js"
+  },
+  "keywords": [
+    "real-estate",
+    "lead-generation",
+    "sms",
+    "clicksend",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/server": "^1.4.1",
+    "@supabase/supabase-js": "^2.109.0",
+    "@types/node": "^25.2.3",
+    "axios": "^1.13.5",
+    "bcryptjs": "^2.4.3",
+    "bluebird": "^3.7.2",
+    "clicksend": "^5.0.79",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "http": "^0.0.1-security",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^7.6.3",
+    "nodemailer": "^6.9.7",
+    "request": "^2.88.2",
+    "socket.io": "^4.6.0",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /pages/admin/
+Disallow: /pages/thank-you/
+Sitemap: https://michiganpropertybuyers.vercel.app/sitemap.xml

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Contact Metro Michigan Property Buyers. Call, email, or send us a message and we'll get back to you within one business day.">
+    <meta name="keywords" content="contact cash home buyer, sell my house contact, metro michigan property buyers contact">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://michiganpropertybuyers.vercel.app/pages/contact/contact">
+    <meta property="og:title" content="Contact Us | Metro Michigan Property Buyers">
+    <meta property="og:description" content="Call, email, or send us a message and we'll get back to you within one business day.">
+    <meta property="og:image" content="https://michiganpropertybuyers.vercel.app/assets/img/MMP-BG.png">
+
+    <title>Contact Us | Metro Michigan Property Buyers</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        .contact-wrap { padding: 3rem 0 4rem; background: var(--bg-light); }
+        .contact-grid {
+            display: grid; grid-template-columns: 1fr 1.3fr; gap: 2rem;
+            max-width: 1000px; margin: 0 auto; align-items: start;
+        }
+        .contact-card {
+            background: var(--bg-white); padding: 2rem; border-radius: 12px;
+            box-shadow: var(--shadow-md);
+        }
+        .contact-card h2 {
+            font-family: var(--font-display); font-size: 2rem; margin-bottom: 0.5rem;
+        }
+        .contact-card > p { color: var(--text-medium); margin-bottom: 1.5rem; }
+
+        .contact-method { display: flex; gap: 0.9rem; margin-bottom: 1.5rem; align-items: flex-start; }
+        .contact-method .cm-icon { font-size: 1.4rem; line-height: 1.3; }
+        .contact-method .cm-label {
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;
+            color: var(--text-light); font-weight: 700; margin-bottom: 0.15rem;
+        }
+        .contact-method a { color: var(--primary); font-weight: 600; font-size: 1.05rem; }
+        .contact-method span.cm-value { color: var(--text-dark); font-weight: 600; }
+        .contact-note {
+            margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+            color: var(--text-medium); font-size: 0.9rem;
+        }
+        .contact-note a { color: var(--primary); font-weight: 600; }
+
+        .form-row { margin-bottom: 1.1rem; }
+        .form-row label {
+            display: block; font-size: 0.85rem; font-weight: 600;
+            margin-bottom: 0.35rem; color: var(--text-dark);
+        }
+        .form-row .req { color: var(--primary); }
+        .form-row input, .form-row textarea {
+            width: 100%; padding: 11px 13px; border: 1px solid var(--border);
+            border-radius: 8px; font-family: var(--font-body); font-size: 0.95rem;
+            color: var(--text-dark); background: var(--bg-white);
+        }
+        .form-row input:focus, .form-row textarea:focus {
+            outline: none; border-color: var(--primary);
+        }
+        .form-row textarea { resize: vertical; min-height: 130px; }
+        .field-error { color: var(--primary); font-size: 0.8rem; margin-top: 0.3rem; display: none; }
+        .form-row.has-error input, .form-row.has-error textarea { border-color: var(--primary); }
+        .form-row.has-error .field-error { display: block; }
+
+        /* Honeypot - hidden from people, visible to bots */
+        .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+        .contact-submit { width: 100%; margin-top: 0.5rem; }
+        .contact-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .form-status { padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem; display: none; font-size: 0.92rem; }
+        .form-status.ok { display: block; background: #E8F5E9; color: #1B5E20; border: 1px solid #C8E6C9; }
+        .form-status.err { display: block; background: #FFEBEE; color: #B71C1C; border: 1px solid #FFCDD2; }
+
+        @media (max-width: 820px) {
+            .contact-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">
+                    <span class="logo-icon"></span>
+                    <span class="logo-text">METRO MICHIGAN PROPERTY BUYERS</span>
+                </div>
+                <button class="mobile-menu-toggle" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/pages/how-it-works/how-it-works">How It Works</a></li>
+                    <li><a href="/pages/sell-your-house/sell">Sell Your House</a></li>
+                    <li><a href="/pages/testimonials/testimonials">Testimonials</a></li>
+                    <li><a href="/pages/faq/faq">FAQ</a></li>
+                    <li><a href="/pages/about/about">About Us</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero" style="min-height: 32vh;">
+        <div class="hero-background"></div>
+        <div class="container">
+            <div class="hero-content" style="grid-template-columns: 1fr; text-align: center;">
+                <div class="hero-text">
+                    <h1 class="hero-title">Contact Us</h1>
+                    <p class="hero-subtitle">Questions about selling your house? We're here to help.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="contact-wrap">
+        <div class="container">
+            <div class="contact-grid">
+
+                <!-- Left: direct contact details -->
+                <div class="contact-card">
+                    <h2>Reach Us Directly</h2>
+                    <p>Prefer to talk? Call or email us any time.</p>
+
+                    <div class="contact-method">
+                        <span class="cm-icon">&#128222;</span>
+                        <div>
+                            <div class="cm-label">Phone</div>
+                            <a href="tel:+15175008870">(517) 500-8870</a>
+                        </div>
+                    </div>
+
+                    <div class="contact-method">
+                        <span class="cm-icon">&#128231;</span>
+                        <div>
+                            <div class="cm-label">Email</div>
+                            <a href="mailto:offer@metromichiganpropertybuyers.com">offer@metromichiganpropertybuyers.com</a>
+                        </div>
+                    </div>
+
+                    <div class="contact-method">
+                        <span class="cm-icon">&#128205;</span>
+                        <div>
+                            <div class="cm-label">Service Area</div>
+                            <span class="cm-value">Available Nationwide</span>
+                        </div>
+                    </div>
+
+                    <div class="contact-method">
+                        <span class="cm-icon">&#128337;</span>
+                        <div>
+                            <div class="cm-label">Response Time</div>
+                            <span class="cm-value">Within one business day</span>
+                        </div>
+                    </div>
+
+                    <div class="contact-note">
+                        Ready for an offer? Skip the form and
+                        <a href="/pages/sell-your-house/sell">request your no-obligation cash offer</a>
+                        &mdash; it takes about two minutes.
+                    </div>
+                </div>
+
+                <!-- Right: message form -->
+                <div class="contact-card">
+                    <h2>Send a Message</h2>
+                    <p>Fill this in and we'll get back to you.</p>
+
+                    <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
+
+                    <form id="contactForm" novalidate>
+                        <div class="form-row" id="row-name">
+                            <label for="cName">Your Name <span class="req">*</span></label>
+                            <input type="text" id="cName" name="name" autocomplete="name" maxlength="100" required>
+                            <div class="field-error" id="err-name"></div>
+                        </div>
+
+                        <div class="form-row" id="row-email">
+                            <label for="cEmail">Email Address <span class="req">*</span></label>
+                            <input type="email" id="cEmail" name="email" autocomplete="email" maxlength="200" required>
+                            <div class="field-error" id="err-email"></div>
+                        </div>
+
+                        <div class="form-row" id="row-phone">
+                            <label for="cPhone">Phone Number <span style="color:var(--text-light);font-weight:400">(optional)</span></label>
+                            <input type="tel" id="cPhone" name="phone" autocomplete="tel" maxlength="20">
+                            <div class="field-error" id="err-phone"></div>
+                        </div>
+
+                        <div class="form-row" id="row-message">
+                            <label for="cMessage">How Can We Help? <span class="req">*</span></label>
+                            <textarea id="cMessage" name="message" maxlength="2000" required
+                                placeholder="Tell us about your property or ask us anything..."></textarea>
+                            <div class="field-error" id="err-message"></div>
+                        </div>
+
+                        <!-- Honeypot: left empty by people, filled by bots -->
+                        <div class="hp-field" aria-hidden="true">
+                            <label for="cWebsite">Website</label>
+                            <input type="text" id="cWebsite" name="website" tabindex="-1" autocomplete="off">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary contact-submit" id="contactSubmit">
+                            Send Message
+                        </button>
+
+                        <p style="font-size:0.78rem;color:var(--text-light);margin-top:0.9rem;text-align:center">
+                            By sending this you agree to our
+                            <a href="/pages/legal/privacy" style="color:var(--primary)">Privacy Policy</a>.
+                            We never share your information.
+                        </p>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>METRO MICHIGAN PROPERTY BUYERS</h4>
+                    <p>We buy houses for cash across the United States. Fair offers, fast closings, no hassles.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/pages/how-it-works/how-it-works">How It Works</a></li>
+                        <li><a href="/pages/sell-your-house/sell">Sell Your House</a></li>
+                        <li><a href="/pages/faq/faq">FAQ</a></li>
+                        <li><a href="/pages/about/about">About Us</a></li>
+                        <li><a href="/pages/contact/contact">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li>&#128231; offer@metromichiganpropertybuyers.com</li>
+                        <li>&#128222; (517) 500-8870</li>
+                        <li>&#128205; Available Nationwide</li>
+                        <li>&#128241; <a href="https://www.facebook.com/profile.php?id=61593816036842" target="_blank" rel="noopener">Facebook</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 METRO MICHIGAN PROPERTY BUYERS. All rights reserved. | <a href="/pages/legal/privacy">Privacy Policy</a> | <a href="/pages/legal/terms">Terms of Service</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/contact.js"></script>
+    <script src="/assets/js/chat-widget.js" defer></script>
+</body>
+</html>

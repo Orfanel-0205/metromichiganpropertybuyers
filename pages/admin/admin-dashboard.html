@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Dashboard | Admin</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --black:  #1A1A1A;
+            --grey:   #f5f5f5;
+            --border: #e8e8e8;
+            --text:   #444;
+            --red:    #D32F2F;
+            --green:  #2e7d32;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--grey); color: var(--black); padding-bottom: 60px; }
+
+        /* ── HEADER ── */
+        .header {
+            background: var(--black); color: #fff;
+            padding: 0.9rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        .header h1 { font-size: 1.1rem; font-weight: 700; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: #4caf50; display: inline-block; margin-right: 4px; }
+        .conn-dot.off { background: #f44336; }
+        .user-badge { font-size: 0.82rem; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px; }
+        .btn-logout { background: var(--red); color: #fff; border: none; padding: 7px 16px; border-radius: 5px; cursor: pointer; font-size: 0.82rem; font-weight: 700; }
+        .btn-logout:hover { background: #b71c1c; }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed; top: 68px; right: 20px;
+            background: var(--black); color: #fff;
+            padding: 14px 18px; border-radius: 8px;
+            font-size: 0.88rem; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 9999; display: none; max-width: 320px;
+            border-left: 4px solid #4caf50;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.show { display: block; }
+        @keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: none; opacity: 1; } }
+        .toast-title { font-weight: 700; margin-bottom: 3px; }
+        .toast-body  { font-size: 0.8rem; color: #ccc; }
+
+        /* ── CONTAINER ── */
+        .container { max-width: 1280px; margin: 2rem auto; padding: 0 1.5rem; }
+
+        /* ── TABS ── */
+        .tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); }
+        .tab {
+            padding: 10px 22px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+            border: none; background: none; color: #888;
+            border-bottom: 2px solid transparent; margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .tab.active { color: var(--black); border-bottom-color: var(--black); }
+        .tab:hover:not(.active) { color: #555; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── STAT CARDS ── */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+        .stat-card { background: #fff; padding: 1.4rem 1.5rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-bottom: 3px solid transparent; }
+        .stat-card:nth-child(1) { border-color: #1A1A1A; }
+        .stat-card:nth-child(2) { border-color: #1565c0; }
+        .stat-card:nth-child(3) { border-color: #4caf50; }
+        .stat-card:nth-child(4) { border-color: #f57c00; }
+        .stat-card h3 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
+        .stat-card .number { font-size: 2.2rem; font-weight: 700; }
+
+        /* ── TOOLBAR ── */
+        .toolbar { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+        .toolbar select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.88rem; outline: none; background: #fff; }
+        .toolbar select:focus { border-color: var(--black); }
+        .btn-primary   { background: var(--black); color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-size: 0.88rem; cursor: pointer; font-weight: 700; }
+        .btn-primary:hover { background: #333; }
+        .btn-secondary { background: #fff; color: var(--black); border: 1px solid var(--border); padding: 8px 18px; border-radius: 6px; font-size: 0.88rem; cursor: pointer; font-weight: 600; }
+        .btn-secondary:hover { border-color: var(--black); }
+        .spacer { flex: 1; }
+
+        /* ── TABLE CARD ── */
+        .table-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #fafafa; }
+        th { padding: 0.85rem 1rem; text-align: left; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #666; border-bottom: 1px solid var(--border); }
+        td { padding: 0.85rem 1rem; font-size: 0.88rem; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: #fafafa; }
+        tbody tr.flash { animation: flash 2s ease; }
+        @keyframes flash { from { background: #e8f5e9; } to { background: transparent; } }
+
+        .address-cell { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        a { color: inherit; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* badges */
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.74rem; font-weight: 700; }
+        .badge-new           { background: #e3f2fd; color: #1565c0; }
+        .badge-contacted     { background: #fff3e0; color: #ef6c00; }
+        .badge-under-review  { background: #f3e5f5; color: #7b1fa2; }
+        .badge-offer-made    { background: #e8f5e9; color: #2e7d32; }
+        .badge-closed        { background: #2e7d32; color: #fff; }
+        .badge-not-interested{ background: #ffebee; color: #c62828; }
+        .badge-success       { background: #e8f5e9; color: #2e7d32; }
+        .badge-fail          { background: #ffebee; color: #c62828; }
+
+        .priority-High   { color: #c62828; font-weight: 700; }
+        .priority-Medium { color: #ef6c00; font-weight: 600; }
+        .priority-Low    { color: #388e3c; }
+
+        .btn-approve { background: #2e7d32; color: #fff; border: none; padding: 5px 13px; border-radius: 5px; cursor: pointer; font-size: 0.78rem; font-weight: 700; }
+        .btn-approve:hover { background: #256428; }
+        .btn-reject { background: #fff; color: #c62828; border: 1px solid #f0c4c4; padding: 5px 13px; border-radius: 5px; cursor: pointer; font-size: 0.78rem; font-weight: 700; }
+        .btn-reject:hover { border-color: #c62828; }
+        .btn-unapprove { background: #fff; color: #666; border: 1px solid var(--border); padding: 5px 13px; border-radius: 5px; cursor: pointer; font-size: 0.78rem; font-weight: 600; }
+        .btn-unapprove:hover { border-color: #888; }
+        .review-msg { max-width: 420px; color: #444; line-height: 1.5; white-space: pre-wrap; }
+        .review-stars { color: #f5a623; letter-spacing: 1px; white-space: nowrap; }
+        .review-meta { color: #999; font-size: 0.78rem; }
+        .btn-view { background: var(--black); color: #fff; border: none; padding: 5px 13px; border-radius: 5px; cursor: pointer; font-size: 0.78rem; font-weight: 700; }
+        .btn-view:hover { background: #333; }
+
+        /* state boxes */
+        .state-box { padding: 4rem 1rem; text-align: center; color: #aaa; font-size: 0.92rem; }
+        .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: var(--black); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── MODAL ── */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-overlay.show { display: flex; }
+        .modal-box { background: #fff; width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; border-radius: 10px; padding: 2rem; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+        .modal-header h2 { font-size: 1.15rem; }
+        .btn-close { background: none; border: none; font-size: 1.6rem; cursor: pointer; color: #bbb; line-height: 1; }
+        .btn-close:hover { color: var(--black); }
+
+        .detail-grid { display: grid; grid-template-columns: 148px 1fr; gap: 0.55rem 1rem; font-size: 0.88rem; margin-bottom: 0.75rem; }
+        .dl { color: #888; font-weight: 600; }
+        .dv { color: var(--black); }
+        hr.sep { border: none; border-top: 1px solid var(--border); margin: 1.2rem 0; }
+
+        .status-row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-top: 1.25rem; }
+        .status-row select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.88rem; outline: none; flex: 1; min-width: 140px; }
+
+        .notes-section { margin-top: 1.5rem; }
+        .notes-section h4 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin-bottom: 0.75rem; }
+        .note-item { background: #f9f9f9; border-radius: 6px; padding: 9px 12px; margin-bottom: 0.4rem; font-size: 0.86rem; }
+        .note-date { font-size: 0.74rem; color: #bbb; margin-top: 3px; }
+        .add-note { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+        .add-note input { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.88rem; outline: none; }
+        .add-note input:focus { border-color: var(--black); }
+
+        /* ── LOG TABLE specifics ── */
+        .log-ip   { font-family: monospace; font-size: 0.8rem; color: #888; }
+        .log-ua   { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.78rem; color: #aaa; }
+        .log-time { white-space: nowrap; font-size: 0.82rem; }
+
+        @media (max-width: 640px) {
+            .header { padding: 0.8rem 1rem; }
+            .container { padding: 0 0.75rem; }
+            th, td { padding: 0.65rem 0.6rem; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .dl { margin-bottom: -0.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <h1>📊 METRO MICHIGAN PROPERTY BUYERS &nbsp;·&nbsp; Admin</h1>
+    <div class="header-right">
+        <span><span class="conn-dot" id="connDot"></span><span id="connLabel" style="font-size:0.78rem;color:#ccc">Connecting...</span></span>
+        <span class="user-badge" id="userName">–</span>
+        <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+    <div class="toast-title" id="toastTitle"></div>
+    <div class="toast-body"  id="toastBody"></div>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+
+    <!-- TABS -->
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('leads', this)">🏠 Leads</button>
+        <button class="tab"        onclick="switchTab('reviews', this)">⭐ Reviews <span id="pendingBadge" style="display:none;background:#c62828;color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;margin-left:4px"></span></button>
+        <button class="tab"        onclick="switchTab('logs',  this)">🔐 Login Logs</button>
+    </div>
+
+    <!-- ═══════════════ LEADS TAB ═══════════════ -->
+    <div class="tab-content active" id="tab-leads">
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card"><h3>Total Leads</h3><div class="number" id="statTotal">–</div></div>
+            <div class="stat-card"><h3>Today</h3><div class="number" id="statToday">–</div></div>
+            <div class="stat-card"><h3>New</h3><div class="number" id="statNew">–</div></div>
+            <div class="stat-card"><h3>In Progress</h3><div class="number" id="statInProg">–</div></div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <select id="fStatus" onchange="loadLeads()">
+                <option value="">All Status</option>
+                <option>New</option><option>Contacted</option><option>Under Review</option>
+                <option>Offer Made</option><option>Closed</option><option>Not Interested</option>
+            </select>
+            <select id="fPriority" onchange="loadLeads()">
+                <option value="">All Priority</option>
+                <option>High</option><option>Medium</option><option>Low</option>
+            </select>
+            <button class="btn-secondary" onclick="loadLeads()">↻ Refresh</button>
+            <div class="spacer"></div>
+            <span style="font-size:0.8rem;color:#aaa" id="leadCount"></span>
+        </div>
+
+        <!-- Leads table -->
+        <div class="table-card">
+            <div class="state-box" id="leadsLoading"><div class="spinner"></div>Loading leads...</div>
+            <div class="state-box" id="leadsEmpty" style="display:none">No leads found.</div>
+            <table id="leadsTable" style="display:none">
+                <thead><tr>
+                    <th>Date</th><th>Name</th><th>Property</th>
+                    <th>Priority</th><th>Status</th><th>Phone</th><th></th>
+                </tr></thead>
+                <tbody id="leadsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══════════════ REVIEWS TAB ═══════════════ -->
+    <div class="tab-content" id="tab-reviews">
+        <div class="toolbar">
+            <select id="fReviewStatus" onchange="loadReviews()">
+                <option value="pending">Pending approval</option>
+                <option value="approved">Approved</option>
+                <option value="all">All reviews</option>
+            </select>
+            <button class="btn-secondary" onclick="loadReviews()">↻ Refresh</button>
+            <div class="spacer"></div>
+            <span style="font-size:0.8rem;color:#aaa" id="reviewCount"></span>
+        </div>
+
+        <div class="table-card">
+            <div class="state-box" id="reviewsLoading"><div class="spinner"></div>Loading reviews...</div>
+            <div class="state-box" id="reviewsEmpty" style="display:none">No reviews here.</div>
+            <table id="reviewsTable" style="display:none">
+                <thead><tr>
+                    <th>Submitted</th><th>Name</th><th>Rating</th><th>Review</th><th>Status</th><th></th>
+                </tr></thead>
+                <tbody id="reviewsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══════════════ LOGIN LOGS TAB ═══════════════ -->
+    <div class="tab-content" id="tab-logs">
+        <div class="toolbar">
+            <button class="btn-secondary" onclick="loadLogs()">↻ Refresh</button>
+            <div class="spacer"></div>
+            <span style="font-size:0.8rem;color:#aaa" id="logCount"></span>
+        </div>
+
+        <div class="table-card">
+            <div class="state-box" id="logsLoading"><div class="spinner"></div>Loading logs...</div>
+            <div class="state-box" id="logsEmpty" style="display:none">No login logs yet.</div>
+            <table id="logsTable" style="display:none">
+                <thead><tr>
+                    <th>Date &amp; Time</th>
+                    <th>Email</th>
+                    <th>Result</th>
+                    <th>IP Address</th>
+                    <th>Browser / Device</th>
+                </tr></thead>
+                <tbody id="logsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div><!-- /container -->
+
+<!-- LEAD DETAIL MODAL -->
+<div class="modal-overlay" id="modal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>Lead Details</h2>
+            <button class="btn-close" onclick="closeModal()">×</button>
+        </div>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<script src="/assets/js/config.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+// ── Auth guard ──────────────────────────────────────────
+const token = localStorage.getItem('adminToken');
+const user  = JSON.parse(localStorage.getItem('adminUser') || '{}');
+if (!token) window.location.href = 'admin-login';
+document.getElementById('userName').textContent = user.fullName || user.username || 'Admin';
+
+// ── Socket.IO ───────────────────────────────────────────
+const socket = io(HSD_CONFIG.apiBaseUrl || window.location.origin);
+socket.on('connect',    () => setConn(true));
+socket.on('disconnect', () => setConn(false));
+function setConn(on) {
+    document.getElementById('connDot').className   = 'conn-dot' + (on ? '' : ' off');
+    document.getElementById('connLabel').textContent = on ? 'Live' : 'Offline';
+}
+socket.on('new-testimonial', t => {
+    showToast('New Review', `${t.name} left a ${t.rating}-star review awaiting approval.`);
+    refreshPendingBadge();
+    const panel = document.getElementById('tab-reviews');
+    if (panel && panel.classList.contains('active')) loadReviews();
+});
+socket.on('new_lead', lead => {
+    showToast('🏠 New Lead!', `${lead.fullName} — ${lead.propertyAddress}`);
+    prependLeadRow(lead);
+    loadStats();
+});
+
+// ── Tab switching ────────────────────────────────────────
+function switchTab(id, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    btn.classList.add('active');
+    if (id === 'logs') loadLogs();
+    if (id === 'reviews') loadReviews();
+}
+
+// ── Toast ────────────────────────────────────────────────
+let toastTimer;
+function showToast(title, body) {
+    clearTimeout(toastTimer);
+    document.getElementById('toastTitle').textContent = title;
+    document.getElementById('toastBody').textContent  = body;
+    document.getElementById('toast').classList.add('show');
+    toastTimer = setTimeout(() => document.getElementById('toast').classList.remove('show'), 5000);
+    if (Notification.permission === 'granted') new Notification(title, { body });
+    else if (Notification.permission !== 'denied') Notification.requestPermission().then(p => { if (p === 'granted') new Notification(title, { body }); });
+}
+
+// ── API helper ───────────────────────────────────────────
+function api(url, opts = {}) {
+    return fetch(HSD_CONFIG.apiUrl(url), { ...opts, headers: { 'Authorization': `Bearer ${token}`, ...(opts.headers || {}) } });
+}
+
+// ── Stats ────────────────────────────────────────────────
+async function loadStats() {
+    try {
+        const data = await api('/api/leads/stats/summary').then(r => r.json());
+        if (!data.success) return;
+        document.getElementById('statTotal').textContent = data.data.total;
+        document.getElementById('statToday').textContent = data.data.todayCount;
+        const byS = {};
+        data.data.byStatus.forEach(s => byS[s._id] = s.count);
+        document.getElementById('statNew').textContent   = byS['New'] || 0;
+        document.getElementById('statInProg').textContent = (byS['Contacted']||0) + (byS['Under Review']||0) + (byS['Offer Made']||0);
+    } catch {}
+}
+
+// ── Leads ────────────────────────────────────────────────
+async function loadLeads() {
+    const [loadEl, emptyEl, tableEl, tbody] = ['leadsLoading','leadsEmpty','leadsTable','leadsBody'].map(id => document.getElementById(id));
+    loadEl.style.display = 'block'; emptyEl.style.display = 'none'; tableEl.style.display = 'none';
+
+    const p = new URLSearchParams({ limit: 200 });
+    const s = document.getElementById('fStatus').value;
+    const pr = document.getElementById('fPriority').value;
+    if (s)  p.append('status',   s);
+    if (pr) p.append('priority', pr);
+
+    try {
+        const data = await api(`/api/leads?${p}`).then(r => r.json());
+        loadEl.style.display = 'none';
+        if (data.success && data.data.length) {
+            document.getElementById('leadCount').textContent = `${data.data.length} lead${data.data.length !== 1 ? 's' : ''}`;
+            tableEl.style.display = 'table';
+            tbody.innerHTML = data.data.map(buildLeadRow).join('');
+        } else {
+            emptyEl.style.display = 'block';
+            document.getElementById('leadCount').textContent = '0 leads';
+        }
+    } catch { loadEl.textContent = '⚠️ Error loading leads.'; }
+}
+
+function buildLeadRow(l) {
+    const date = new Date(l.submittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+    const bc   = 'badge-' + l.status.toLowerCase().replace(/ /g, '-');
+    return `<tr>
+        <td>${date}</td>
+        <td><strong>${esc(l.fullName)}</strong></td>
+        <td><span class="address-cell" title="${esc(l.propertyAddress)}">${esc(l.propertyAddress)}</span></td>
+        <td><span class="priority-${l.priority}">${l.priority}</span></td>
+        <td><span class="badge ${bc}">${l.status}</span></td>
+        <td><a href="tel:${esc(l.phone)}">${esc(l.phone)}</a></td>
+        <td><button class="btn-view" onclick="viewLead('${l._id}')">View</button></td>
+    </tr>`;
+}
+
+function prependLeadRow(lead) {
+    const table = document.getElementById('leadsTable');
+    const tbody = document.getElementById('leadsBody');
+    if (table.style.display === 'none') {
+        document.getElementById('leadsEmpty').style.display = 'none';
+        table.style.display = 'table';
+    }
+    const tr = document.createElement('tr');
+    tr.className = 'flash';
+    tr.innerHTML = buildLeadRow(lead).replace(/^<tr[^>]*>/, '').replace(/<\/tr>$/, '');
+    tbody.prepend(tr);
+}
+
+// ── Login Logs ────────────────────────────────────────────
+async function loadLogs() {
+    const [loadEl, emptyEl, tableEl, tbody] = ['logsLoading','logsEmpty','logsTable','logsBody'].map(id => document.getElementById(id));
+    loadEl.style.display = 'block'; emptyEl.style.display = 'none'; tableEl.style.display = 'none';
+
+    try {
+        const data = await api('/api/admin/logs').then(r => r.json());
+        loadEl.style.display = 'none';
+
+        if (data.success && data.data.length) {
+            document.getElementById('logCount').textContent = `${data.total} log entries`;
+            tableEl.style.display = 'table';
+            tbody.innerHTML = data.data.map(log => {
+                const dt  = new Date(log.timestamp);
+                const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const timeStr = dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const badge   = log.success
+                    ? '<span class="badge badge-success">✓ Success</span>'
+                    : '<span class="badge badge-fail">✗ Failed</span>';
+                return `<tr>
+                    <td class="log-time">${dateStr}<br><span style="color:#aaa;font-size:0.78rem">${timeStr}</span></td>
+                    <td>${esc(log.email || '—')}</td>
+                    <td>${badge}</td>
+                    <td class="log-ip">${esc(log.ip || '—')}</td>
+                    <td class="log-ua" title="${esc(log.userAgent)}">${esc(log.userAgent || '—')}</td>
+                </tr>`;
+            }).join('');
+        } else {
+            emptyEl.style.display = 'block';
+            document.getElementById('logCount').textContent = '0 entries';
+        }
+    } catch { loadEl.textContent = '⚠️ Error loading logs.'; }
+}
+
+// ── Lead Modal ────────────────────────────────────────────
+let currentId = null;
+
+async function viewLead(id) {
+    currentId = id;
+    try {
+        const data = await api(`/api/leads/${id}`).then(r => r.json());
+        if (!data.success) return;
+        const l = data.data;
+        const notes = (l.notes || []).map(n => `
+            <div class="note-item">
+                ${esc(n.text || n.content || '')}
+                <div class="note-date">${new Date(n.createdAt).toLocaleString()}</div>
+            </div>`).join('') || '<p style="color:#bbb;font-size:0.82rem">No notes yet.</p>';
+
+        document.getElementById('modalBody').innerHTML = `
+            <div class="detail-grid">
+                <span class="dl">Address</span>   <span class="dv">${esc(l.propertyAddress)}</span>
+                <span class="dl">Type</span>      <span class="dv">${esc(l.propertyType)}</span>
+                <span class="dl">Condition</span> <span class="dv">${esc(l.propertyCondition)}</span>
+                <span class="dl">Bed / Bath</span><span class="dv">${l.bedrooms||'—'} / ${l.bathrooms||'—'}</span>
+                <span class="dl">Selling Reason</span><span class="dv">${esc(l.sellingReason)}</span>
+                <span class="dl">Timeframe</span> <span class="dv"><strong>${esc(l.timeframe)}</strong></span>
+                <span class="dl">Mortgage</span>  <span class="dv">${esc(l.oweMortgage||'Not specified')}</span>
+                ${l.additionalInfo ? `<span class="dl">Additional</span><span class="dv">${esc(l.additionalInfo)}</span>` : ''}
+            </div>
+            <hr class="sep">
+            <div class="detail-grid">
+                <span class="dl">Name</span>  <span class="dv">${esc(l.fullName)}</span>
+                <span class="dl">Email</span> <span class="dv"><a href="mailto:${esc(l.email)}">${esc(l.email)}</a></span>
+                <span class="dl">Phone</span> <span class="dv"><a href="tel:${esc(l.phone)}">${esc(l.phone)}</a></span>
+                <span class="dl">Preferred</span><span class="dv">${esc(l.preferredContact)}</span>
+                <span class="dl">SMS Consent</span><span class="dv">${l.smsConsent ? '✅ Yes' : '❌ No'}</span>
+            </div>
+            ${l.tracking?.utm_source ? `
+            <hr class="sep">
+            <div class="detail-grid">
+                <span class="dl">Source</span><span class="dv">${esc(l.tracking.utm_source)}</span>
+                ${l.tracking.utm_campaign ? `<span class="dl">Campaign</span><span class="dv">${esc(l.tracking.utm_campaign)}</span>` : ''}
+            </div>` : ''}
+            <hr class="sep">
+            <div class="status-row">
+                <select id="mStatus">
+                    ${['New','Contacted','Under Review','Offer Made','Closed','Not Interested'].map(s =>
+                        `<option ${s===l.status?'selected':''}>${s}</option>`).join('')}
+                </select>
+                <select id="mPriority">
+                    ${['High','Medium','Low'].map(p =>
+                        `<option ${p===l.priority?'selected':''}>${p}</option>`).join('')}
+                </select>
+                <button class="btn-primary" onclick="updateStatus()">Save</button>
+            </div>
+            <div class="notes-section">
+                <h4>Notes</h4>
+                <div id="notesList">${notes}</div>
+                <div class="add-note">
+                    <input type="text" id="noteInput" placeholder="Add a note…" onkeydown="if(event.key==='Enter')addNote()">
+                    <button class="btn-primary" onclick="addNote()">Add</button>
+                </div>
+            </div>`;
+
+        document.getElementById('modal').classList.add('show');
+    } catch (e) { console.error(e); }
+}
+
+async function updateStatus() {
+    const status   = document.getElementById('mStatus').value;
+    const priority = document.getElementById('mPriority').value;
+    try {
+        const data = await api(`/api/leads/${currentId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status, priority })
+        }).then(r => r.json());
+        if (data.success) { showToast('✅ Saved', 'Lead status updated.'); loadLeads(); }
+    } catch {}
+}
+
+async function addNote() {
+    const input = document.getElementById('noteInput');
+    const text  = input.value.trim();
+    if (!text) return;
+    try {
+        const data = await api(`/api/leads/${currentId}/notes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+        }).then(r => r.json());
+        if (data.success) {
+            input.value = '';
+            const div = document.createElement('div');
+            div.className = 'note-item';
+            div.innerHTML = `${esc(text)}<div class="note-date">${new Date().toLocaleString()}</div>`;
+            document.getElementById('notesList').appendChild(div);
+        }
+    } catch {}
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('show');
+    currentId = null;
+    loadLeads();
+}
+document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+// ── Logout ────────────────────────────────────────────────
+function logout() {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
+    window.location.href = 'admin-login';
+}
+
+// ── Reviews / testimonial moderation ─────────────────────
+function stars(n) {
+    const r = Math.max(0, Math.min(5, Number(n) || 0));
+    return '★'.repeat(r) + '☆'.repeat(5 - r);
+}
+
+async function refreshPendingBadge() {
+    try {
+        const data = await api('/api/testimonials/admin?status=pending').then(r => r.json());
+        if (!data.success) return;
+        const n = data.counts ? data.counts.pending : 0;
+        const badge = document.getElementById('pendingBadge');
+        badge.textContent = n;
+        badge.style.display = n > 0 ? 'inline-block' : 'none';
+    } catch {}
+}
+
+async function loadReviews() {
+    const [loadEl, emptyEl, tableEl, tbody] = ['reviewsLoading','reviewsEmpty','reviewsTable','reviewsBody'].map(id => document.getElementById(id));
+    loadEl.style.display = 'block'; emptyEl.style.display = 'none'; tableEl.style.display = 'none';
+
+    const status = document.getElementById('fReviewStatus').value;
+
+    try {
+        const data = await api(`/api/testimonials/admin?status=${status}`).then(r => r.json());
+        loadEl.style.display = 'none';
+
+        if (data.counts) {
+            const badge = document.getElementById('pendingBadge');
+            badge.textContent = data.counts.pending;
+            badge.style.display = data.counts.pending > 0 ? 'inline-block' : 'none';
+        }
+
+        if (data.success && data.data.length) {
+            document.getElementById('reviewCount').textContent = `${data.data.length} review${data.data.length !== 1 ? 's' : ''}`;
+            tableEl.style.display = 'table';
+            tbody.innerHTML = data.data.map(buildReviewRow).join('');
+        } else {
+            emptyEl.style.display = 'block';
+            document.getElementById('reviewCount').textContent = '0 reviews';
+        }
+    } catch { loadEl.textContent = 'Error loading reviews.'; }
+}
+
+function buildReviewRow(t) {
+    const date = new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+    const badge = t.isApproved
+        ? '<span class="badge badge-success">Approved</span>'
+        : '<span class="badge badge-fail">Pending</span>';
+    const featured = t.isFeatured ? ' <span class="review-meta">(featured)</span>' : '';
+    const actions = t.isApproved
+        ? `<button class="btn-unapprove" onclick="setReviewApproval('${t._id}', false)">Unapprove</button>`
+        : `<button class="btn-approve" onclick="setReviewApproval('${t._id}', true)">Approve</button>`;
+    return `<tr>
+        <td>${date}</td>
+        <td><strong>${esc(t.name)}</strong><br><span class="review-meta">${esc(t.location)}</span></td>
+        <td class="review-stars">${stars(t.rating)}</td>
+        <td><div class="review-msg">${esc(t.message)}</div>${t.situation ? `<span class="review-meta">${esc(t.situation)}</span>` : ''}</td>
+        <td>${badge}${featured}</td>
+        <td style="white-space:nowrap">${actions} <button class="btn-reject" onclick="deleteReview('${t._id}')">Delete</button></td>
+    </tr>`;
+}
+
+async function setReviewApproval(id, approved) {
+    try {
+        const res = await api(`/api/testimonials/${id}/approve`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ approved })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(approved ? 'Approved' : 'Unapproved', approved ? 'Review is now public.' : 'Review hidden from the public page.');
+            loadReviews();
+        } else {
+            showToast('Error', data.message || 'Could not update the review.');
+        }
+    } catch { showToast('Error', 'Could not reach the server.'); }
+}
+
+async function deleteReview(id) {
+    if (!confirm('Delete this review permanently? This cannot be undone.')) return;
+    try {
+        const res = await api(`/api/testimonials/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) { showToast('Deleted', 'Review removed.'); loadReviews(); }
+        else showToast('Error', data.message || 'Could not delete the review.');
+    } catch { showToast('Error', 'Could not reach the server.'); }
+}
+
+// ── XSS escape ────────────────────────────────────────────
+function esc(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Bootstrap ─────────────────────────────────────────────
+loadStats();
+loadLeads();
+refreshPendingBadge();
+</script>
+</body>
+</html>
