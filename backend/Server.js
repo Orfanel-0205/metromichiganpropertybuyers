@@ -13,6 +13,8 @@ const {
     validateMongoUri
 } = require('./config/database');
 
+const { getAllowedOrigins, isAllowedOrigin } = require('./config/origins');
+
 let mongoConfig;
 try {
     mongoConfig = validateMongoUri(process.env.MONGODB_URI);
@@ -45,9 +47,18 @@ const PORT = process.env.PORT || 5000;
 const MONGODB_URI = mongoConfig.uri;
 const maxAttempts = 3;
 
-if (!process.env.JWT_SECRET) {
-    console.warn('JWT_SECRET not found in .env, using default. Set a strong secret before production.');
-    process.env.JWT_SECRET = 'change_this_to_a_secure_random_string';
+// A JWT secret that ships in source is not a secret: anyone who can read this
+// repository could mint a valid superadmin token. Development falls back to a
+// random per-boot secret (old tokens stop working on restart, which is fine
+// locally); production refuses to start rather than run on a guessable key.
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    if (process.env.NODE_ENV === 'production') {
+        console.error('JWT_SECRET is missing or shorter than 32 characters. Refusing to start.');
+        console.error('Generate one with:  openssl rand -hex 48');
+        process.exit(1);
+    }
+    process.env.JWT_SECRET = require('crypto').randomBytes(48).toString('hex');
+    console.warn('JWT_SECRET not set. Using a temporary development secret; admin sessions end on restart.');
 }
 
 if (process.env.EMAIL_USER) process.env.EMAIL_USER = process.env.EMAIL_USER.trim();
@@ -62,6 +73,14 @@ if (process.env.RESEND_API_KEY) {
 } else {
     console.log('Email transport: SMTP via', process.env.EMAIL_SERVICE || 'gmail', 'as', process.env.EMAIL_USER);
     console.warn('  NOTE: hosts that block outbound SMTP will time out. Set RESEND_API_KEY there.');
+}
+
+const { getLeadNotificationRecipients } = require('./utils/email');
+const leadRecipients = getLeadNotificationRecipients();
+if (leadRecipients.length) {
+    console.log('New lead notifications go to:', leadRecipients.join(', '));
+} else {
+    console.warn('LEAD_NOTIFICATION_EMAIL is not set. New leads will be saved but nobody will be emailed.');
 }
 
 if (!process.env.GEMINI_API_KEY) {
@@ -102,46 +121,51 @@ app.use(helmet({ contentSecurityPolicy: false }));
 // ===========================
 // CORS
 // ===========================
-// The static site is served from Vercel while this API runs on Render, so the
-// allowed origins have to be listed explicitly. Set ALLOWED_ORIGINS in .env as a
-// comma-separated list; FRONTEND_URL is always included. Vercel preview deploys
-// (*.vercel.app) are matched by pattern so every preview build does not need an entry.
+// The allowlist itself lives in config/origins.js so the HTTP server and the
+// Socket.IO server below cannot drift apart. See that file for the rules.
 
-const staticAllowedOrigins = [
-    process.env.FRONTEND_URL,
-    ...(process.env.ALLOWED_ORIGINS || '').split(',')
-].map((o) => (o || '').trim().replace(/\/+$/, '')).filter(Boolean);
-
-// FRONTEND_URL and ALLOWED_ORIGINS usually name the same host; list it once.
-const allowedOrigins = [...new Set(staticAllowedOrigins)];
-
-const localOriginPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
-const vercelPreviewPattern = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i;
-
-function isAllowedOrigin(origin) {
-    // No Origin header: same-origin navigation, curl, or a server-to-server call.
-    if (!origin) return true;
-
-    const clean = origin.replace(/\/+$/, '');
-    if (allowedOrigins.includes(clean)) return true;
-    if (localOriginPattern.test(clean)) return true;
-    if (process.env.ALLOW_VERCEL_PREVIEWS !== 'false' && vercelPreviewPattern.test(clean)) return true;
-
-    return false;
-}
-
-app.use(cors({
+const corsOptions = {
     origin: (origin, callback) => {
         if (isAllowedOrigin(origin)) return callback(null, true);
+
+        // Hand back a plain refusal rather than an Error. Passing an Error here
+        // routes into the global error handler, which answers 500 with no
+        // Access-Control-Allow-Origin header - exactly what a misconfigured
+        // origin looked like in production, and impossible to tell apart from a
+        // genuine server fault. `false` lets the request continue without CORS
+        // headers, and the guard below turns it into an explicit 403.
         console.warn('Blocked CORS request from origin:', origin);
-        return callback(new Error('Not allowed by CORS'));
+        return callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    // Cache a successful preflight for a day so repeat visitors are not paying
+    // an extra round trip to Render (which may be cold) before every POST.
+    maxAge: 86400
+};
 
-console.log('CORS allowed origins:', allowedOrigins.length ? allowedOrigins.join(', ') : '(localhost only)');
+app.use(cors(corsOptions));
+
+// cors() answers preflights on its own, but only for routes that exist. Handling
+// OPTIONS explicitly means a preflight for any /api path gets a fast 204 with the
+// right headers instead of falling through to the 404 handler.
+app.options('*', cors(corsOptions));
+
+// Anything the allowlist refused reaches here without CORS headers. Answer with
+// a clear 403 so the cause is legible in logs and in the browser's network tab.
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && !isAllowedOrigin(origin)) {
+        return res.status(403).json({
+            success: false,
+            message: 'Origin not allowed by CORS policy.'
+        });
+    }
+    next();
+});
+
+console.log('CORS allowed origins:', getAllowedOrigins().join(', '));
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(mongoSanitize());
@@ -166,8 +190,10 @@ app.use((req, res, next) => {
 
 const server = http.createServer(app);
 const io = new Server(server, {
+    // Same allowlist as the REST API. The previous form passed "true" as the
+    // allow flag even when the origin was refused, so every origin was accepted.
     cors: {
-        origin: (origin, callback) => callback(isAllowedOrigin(origin) ? null : new Error('Not allowed by CORS'), true),
+        origin: (origin, callback) => callback(null, isAllowedOrigin(origin)),
         methods: ['GET', 'POST'],
         credentials: true
     }
@@ -188,28 +214,37 @@ async function ensureAdminExists() {
     const adminCount = await Admin.countDocuments();
 
     if (adminCount > 0) {
-        console.log(`Found ${adminCount} admin(s) in database`);
+        const superAdmins = await Admin.countDocuments({ role: 'superadmin', isActive: true });
+        console.log(`Found ${adminCount} admin account(s), ${superAdmins} active Super Admin(s).`);
+        if (superAdmins === 0) {
+            console.warn('No active Super Admin exists, so nobody can manage admin accounts.');
+            console.warn('Run: npm run bootstrap-admin -- --repair');
+        }
         return;
     }
 
     const { ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_EMAIL } = process.env;
     if (!ADMIN_USERNAME || !ADMIN_PASSWORD || !ADMIN_EMAIL) {
-        console.warn('No admin user exists. Set ADMIN_USERNAME, ADMIN_PASSWORD, and ADMIN_EMAIL, then run npm run init.');
+        console.warn('No admin account exists yet. Run "npm run bootstrap-admin" to create the first Super Admin.');
         return;
     }
 
+    // Created as superadmin: the first account has to be able to create the
+    // others, and there is no public route that can grant that role.
     await Admin.create({
         username: ADMIN_USERNAME,
         password: ADMIN_PASSWORD,
         email: ADMIN_EMAIL,
         fullName: process.env.ADMIN_FULL_NAME || 'System Administrator',
-        role: 'admin',
-        isActive: true
+        role: 'superadmin',
+        isActive: true,
+        createdBy: 'startup-bootstrap'
     });
 
-    console.log('Default admin created from environment credentials.');
+    console.log('First Super Admin created from environment credentials.');
     console.log('Admin username:', ADMIN_USERNAME);
     console.log('Admin email:', ADMIN_EMAIL);
+    console.warn('ADMIN_PASSWORD is still set in the environment. Remove it once you have signed in.');
 }
 
 async function connectDatabase() {

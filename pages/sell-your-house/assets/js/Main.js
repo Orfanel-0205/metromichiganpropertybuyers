@@ -6,9 +6,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mobile Menu Toggle
     initMobileMenu();
     
-    // Quick Form Handler (Homepage)
-    initQuickForm();
-    
     // Smooth Scroll for Anchor Links
     initSmoothScroll();
     
@@ -51,44 +48,12 @@ function initMobileMenu() {
 // ===========================
 // QUICK FORM (Homepage)
 // ===========================
-function initQuickForm() {
-    const quickForm = document.getElementById('quickLeadForm');
-    
-    if (quickForm) {
-        quickForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                name: quickForm.querySelector('[name="name"]').value,
-                phone: quickForm.querySelector('[name="phone"]').value,
-                email: quickForm.querySelector('[name="email"]').value,
-                propertyAddress: quickForm.querySelector('[name="address"]').value,
-                source: 'homepage_quick_form',
-                tracking: getTrackingData()
-            };
-            
-            try {
-                const response = await fetch(HSD_CONFIG.apiUrl('/api/leads'), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                if (response.ok) {
-                    // Redirect to thank you page or show success
-                    window.location.href = '/pages/thank-you/thank-you';
-                } else {
-                    alert('There was an error submitting your information. Please try again or call us at (517) 500-8870');
-                }
-            } catch (error) {
-                console.error('Form submission error:', error);
-                alert('There was an error submitting your information. Please try again or call us at (517) 500-8870');
-            }
-        });
-    }
-}
+// The homepage quick form is handled by assets/js/Form.js, which is loaded on
+// every page that has one. The version that lived here POSTed straight to
+// /api/leads with a `name` field and without propertyType, propertyCondition,
+// sellingReason, timeframe or preferredContact - all of which the API requires -
+// so it could only ever have produced a 400. Form.js carries the four answers
+// over to the full form instead.
 
 // ===========================
 // SMOOTH SCROLL

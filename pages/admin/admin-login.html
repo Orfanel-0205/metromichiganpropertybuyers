@@ -149,6 +149,8 @@
             <p>Admin Portal</p>
         </div>
 
+        <div class="error-box" id="noticeBox" style="display:none"></div>
+
         <form id="loginForm" autocomplete="off" novalidate>
             <!-- Username -->
             <div class="form-group">
@@ -162,15 +164,17 @@
                 >
             </div>
 
-            <!-- Email -->
+            <!-- Email (optional) -->
+            <!-- The API identifies an account by username or email, so this is a
+                 convenience, not a second factor. When filled in it must match
+                 the account, but leaving it blank is fine. -->
             <div class="form-group">
-                <label for="email">Email Address</label>
+                <label for="email">Email Address <span style="font-weight:400;opacity:0.6">(optional)</span></label>
                 <input
                     type="email"
                     id="email"
-                    placeholder="Enter your email"
+                    placeholder="Optional"
                     autocomplete="email"
-                    required
                 >
             </div>
 
@@ -206,6 +210,19 @@
         window.location.href = 'admin-dashboard';
     }
 
+    // The dashboard sends the reason it bounced us here (expired token, disabled
+    // account, logged out elsewhere). Without this the user just sees the login
+    // page again with no explanation.
+    const reason = new URLSearchParams(window.location.search).get('reason');
+    if (reason) {
+        const notice = document.getElementById('noticeBox');
+        notice.textContent = reason;
+        notice.style.display = 'block';
+        notice.classList.add('show');
+        // Keep it out of the address bar so a refresh does not repeat it.
+        history.replaceState(null, '', window.location.pathname);
+    }
+
     // Password toggle
     document.getElementById('pwToggle').addEventListener('click', () => {
         const pw  = document.getElementById('password');
@@ -235,16 +252,13 @@
             document.getElementById(id).classList.remove('error-field')
         );
 
-        // Client-side validation
+        // Client-side validation. Email is optional; only its format is checked.
         if (!username) { highlight('username'); return showError('Username is required.'); }
-        if (!email)    { highlight('email');    return showError('Email is required.'); }
         if (!password) { highlight('password'); return showError('Password is required.'); }
 
-        // Basic email format check
-        const emailOK = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        if (!emailOK) {
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             highlight('email');
-            return showError('Please enter a valid email address.');
+            return showError('Please enter a valid email address, or leave it blank.');
         }
 
         // Loading state
@@ -255,21 +269,31 @@
             const res  = await fetch(HSD_CONFIG.apiUrl('/api/admin/login'), {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ username, email, password })
+                body:    JSON.stringify({ username, email: email || undefined, password })
             });
 
-            const data = await res.json();
+            // A gateway error or an unreachable API does not return JSON.
+            const data = await res.json().catch(() => ({}));
 
-            if (data.success) {
+            if (res.ok && data.success) {
                 localStorage.setItem('adminToken', data.token);
                 localStorage.setItem('adminUser', JSON.stringify(data.admin));
                 window.location.href = 'admin-dashboard';
-            } else {
-                throw new Error(data.message || 'Login failed.');
+                return;
             }
 
+            // 429 carries a real explanation worth showing; anything else keeps
+            // the server's generic wording.
+            throw new Error(data.message || 'Login failed. Please check your details and try again.');
+
         } catch (err) {
-            showError(err.message);
+            // Network-level failures land here with browser-speak like
+            // "Failed to fetch", which tells an admin nothing useful.
+            const isNetwork = err instanceof TypeError;
+            console.error('Login failed:', err);
+            showError(isNetwork
+                ? 'Could not reach the server. Check your connection and try again.'
+                : err.message);
             btn.disabled    = false;
             btn.textContent = 'Login';
         }

@@ -31,7 +31,12 @@ function validateMongoUri(rawUri) {
         throw new Error('MONGODB_URI must start with mongodb:// or mongodb+srv://.');
     }
 
-    if (!parsed.username || !parsed.password) {
+    // Atlas (mongodb+srv://) always authenticates, so a missing username or
+    // password there is a configuration mistake worth failing loudly on. A plain
+    // mongodb:// host may legitimately have no auth - a local mongod, a test
+    // container, an in-memory server - and requiring credentials there made the
+    // backend impossible to run or test outside Atlas.
+    if (parsed.protocol === 'mongodb+srv:' && (!parsed.username || !parsed.password)) {
         throw new Error('MONGODB_URI must include MongoDB Atlas username and password credentials.');
     }
 

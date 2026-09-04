@@ -88,19 +88,20 @@ Bebas Neue (display) and Source Sans 3 (body); the palette lives in the `:root` 
 │   └── js/
 │       ├── config.js           Resolves which API origin to call
 │       ├── chat-widget.js      Floating chat assistant (shared by all pages)
-│       └── Form.js             Home page lead form
+│       └── Form.js             Both seller lead forms (home page + sell page)
 ├── pages/                      One folder per page, each with its own assets
 ├── vercel.json                 Static hosting config (routing, headers, redirects)
 ├── sitemap.xml / robots.txt
 └── backend/
     ├── Server.js               Entry point: middleware, routes, Socket.io, startup
-    ├── Init.js                 First-run admin bootstrap (npm run init)
     ├── config/database.js      Mongo URI validation, DNS, connection options
-    ├── middleware/Auth.js      authMiddleware (JWT) + authorize (roles)
+    ├── config/origins.js       The CORS allowlist (shared by HTTP and Socket.io)
+    ├── middleware/Auth.js      authMiddleware (JWT + live account check) + roles
     ├── models/                 Admin, Lead, Testimonial, ChatLog
-    ├── routes/                 admin, leads, chat, sms, testimonials
-    ├── utils/                  email.js (Nodemailer), sms.js (ClickSend)
-    └── scripts/                One-off admin maintenance scripts
+    ├── routes/                 admin, leads, chat, sms, testimonials, contact
+    ├── utils/                  email.js, sms.js, supabase.js, leadContacts.js
+    ├── scripts/                bootstrap-admin.js - creates the first Super Admin
+    └── tests/                  node:test suites (npm test)
 ```
 
 Each page folder carries its own copy of `style.css`. They are independent — editing
@@ -119,11 +120,15 @@ npm install
 cp .env.example .env
 ```
 
-Then fill in `.env` (see below) and create the first admin user:
+Then fill in `.env` (see below) and create the first Super Admin:
 
 ```bash
-npm run init
+npm run bootstrap-admin
 ```
+
+It prompts for the password rather than reading it from a file, so the credential
+never lands in `.env`, in shell history, or in a hosting dashboard. Run the test
+suite with `npm test`.
 
 The frontend has no build step and no dependencies to install.
 
@@ -139,16 +144,23 @@ placeholder values. `.env` is gitignored — never commit real credentials.
 | Variable | Description |
 | --- | --- |
 | `MONGODB_URI` | Atlas connection string, including the database name. URL-encode any reserved characters in the password. |
-| `JWT_SECRET` | Long random string used to sign admin tokens. The server falls back to an insecure default and warns if unset — always set it. |
+| `JWT_SECRET` | At least 32 random characters, used to sign admin tokens. In production the server refuses to start without it. Generate with `openssl rand -hex 48`. |
+| `LEAD_NOTIFICATION_EMAIL` | Where new seller leads are emailed. Comma-separated for several recipients. Without it, leads are still stored and shown in the dashboard, but nobody is notified. |
 
-### Admin bootstrap (used by `npm run init`)
+### Admin bootstrap (optional — only for non-interactive setup)
+
+`npm run bootstrap-admin` prompts for these, which is the preferred path. Set them
+only when running unattended, and remove `ADMIN_PASSWORD` afterwards.
 
 | Variable | Description |
 | --- | --- |
 | `ADMIN_USERNAME` | Login username |
-| `ADMIN_PASSWORD` | Initial password |
-| `ADMIN_EMAIL` | Must be a Gmail or Yahoo address — `routes/admin.js` enforces this |
+| `ADMIN_PASSWORD` | Initial password (at least 10 characters, letters and numbers) |
+| `ADMIN_EMAIL` | Any valid address, including the company domain |
 | `ADMIN_FULL_NAME` | Display name (optional) |
+
+The account created this way is a **Super Admin**, so it can create the rest from
+the dashboard's Admins tab. There is no public registration endpoint.
 
 ### Email (Nodemailer)
 
@@ -158,7 +170,9 @@ placeholder values. `.env` is gitignored — never commit real credentials.
 | `EMAIL_USER` | Sending account |
 | `EMAIL_PASS` | App password, not the account password |
 | `EMAIL_FROM` | From header |
-| `ADMIN_EMAIL` | Where lead notifications are sent |
+| `RESEND_API_KEY` | Preferred transport. Render blocks outbound SMTP, so this is required there. |
+| `RESEND_FROM` | Sender address for Resend |
+| `LEAD_NOTIFICATION_EMAIL` | Where lead notifications are sent. `ADMIN_EMAIL` is the fallback. |
 
 ### SMS (ClickSend)
 
@@ -212,9 +226,10 @@ Express serves both the API and the static site, so everything is on one origin 
 Other scripts:
 
 ```bash
-npm run init         # create the first admin from .env
-npm run test-email   # send a test email
-npm run test-sms     # send a test SMS
+npm run bootstrap-admin   # create the first Super Admin (prompts for the password)
+npm test                  # run the CORS, auth, and integration suites
+npm run test-email        # send a test email
+npm run test-sms          # send a test SMS
 ```
 
 To open the HTML files directly (or through a separate static server) instead, set

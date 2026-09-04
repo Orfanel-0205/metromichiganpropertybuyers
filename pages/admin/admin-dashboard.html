@@ -157,6 +157,21 @@
         .add-note input { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.88rem; outline: none; }
         .add-note input:focus { border-color: var(--black); }
 
+        /* ── ADMIN MANAGEMENT ── */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.85rem; margin-bottom: 1rem; }
+        .field label { display: block; font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+        .field input, .field select { width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.88rem; font-family: inherit; }
+        .field input:focus, .field select:focus { outline: none; border-color: var(--black); }
+        .field .hint { font-size: 0.72rem; color: #aaa; margin-top: 3px; }
+        .role-pill { font-size: 0.72rem; font-weight: 700; padding: 2px 9px; border-radius: 10px; background: #eee; color: #555; }
+        .role-pill.super { background: #1A1A1A; color: #fff; }
+        .form-note { font-size: 0.8rem; padding: 10px 12px; border-radius: 5px; margin-bottom: 0.9rem; display: none; }
+        .form-note.err { background: #fdecea; color: #b71c1c; display: block; }
+        .form-note.ok  { background: #e8f5e9; color: #1b5e20; display: block; }
+        .btn-danger { background: var(--red); color: #fff; border: none; padding: 5px 11px; border-radius: 4px; cursor: pointer; font-size: 0.76rem; font-weight: 700; }
+        .search-input { padding: 8px 11px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.85rem; font-family: inherit; min-width: 220px; }
+        .search-input:focus { outline: none; border-color: var(--black); }
+
         /* ── LOG TABLE specifics ── */
         .log-ip   { font-family: monospace; font-size: 0.8rem; color: #888; }
         .log-ua   { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.78rem; color: #aaa; }
@@ -197,6 +212,10 @@
         <button class="tab active" onclick="switchTab('leads', this)">🏠 Leads</button>
         <button class="tab"        onclick="switchTab('reviews', this)">⭐ Reviews <span id="pendingBadge" style="display:none;background:#c62828;color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;margin-left:4px"></span></button>
         <button class="tab"        onclick="switchTab('logs',  this)">🔐 Login Logs</button>
+        <!-- Shown only to a Super Admin. This is presentation only - the API
+             refuses every /api/admin management call from a plain admin
+             regardless of what the browser chooses to display. -->
+        <button class="tab" id="adminsTabBtn" style="display:none" onclick="switchTab('admins', this)">👤 Admins</button>
     </div>
 
     <!-- ═══════════════ LEADS TAB ═══════════════ -->
@@ -211,14 +230,23 @@
 
         <!-- Toolbar -->
         <div class="toolbar">
+            <input type="search" id="fSearch" class="search-input" placeholder="Search name, email, phone, address…">
+            <!-- Options are filled from /api/leads/meta/options so this list can
+                 never drift from the schema's enum. -->
             <select id="fStatus" onchange="loadLeads()">
                 <option value="">All Status</option>
-                <option>New</option><option>Contacted</option><option>Under Review</option>
-                <option>Offer Made</option><option>Closed</option><option>Not Interested</option>
             </select>
             <select id="fPriority" onchange="loadLeads()">
                 <option value="">All Priority</option>
                 <option>High</option><option>Medium</option><option>Low</option>
+            </select>
+            <select id="fSort" onchange="loadLeads()">
+                <option value="submittedAt:desc">Newest first</option>
+                <option value="submittedAt:asc">Oldest first</option>
+                <option value="fullName:asc">Name A-Z</option>
+                <option value="status:asc">Status</option>
+                <option value="priority:asc">Priority</option>
+                <option value="updatedAt:desc">Recently updated</option>
             </select>
             <button class="btn-secondary" onclick="loadLeads()">↻ Refresh</button>
             <div class="spacer"></div>
@@ -288,6 +316,71 @@
         </div>
     </div>
 
+    <!-- ═══════════════ ADMINS TAB ═══════════════ -->
+    <div class="tab-content" id="tab-admins">
+        <div class="table-card" style="padding:1.25rem;margin-bottom:1.5rem">
+            <h3 style="font-size:0.95rem;margin-bottom:0.9rem">Add an administrator</h3>
+            <div class="form-note" id="adminFormNote"></div>
+            <div class="form-grid">
+                <div class="field">
+                    <label for="naFullName">Full name</label>
+                    <input id="naFullName" type="text" autocomplete="off">
+                </div>
+                <div class="field">
+                    <label for="naEmail">Email address</label>
+                    <input id="naEmail" type="email" autocomplete="off">
+                </div>
+                <div class="field">
+                    <label for="naUsername">Username</label>
+                    <input id="naUsername" type="text" autocomplete="off">
+                    <div class="hint">Letters, numbers, dots, dashes, underscores.</div>
+                </div>
+                <div class="field">
+                    <label for="naPassword">Temporary password</label>
+                    <input id="naPassword" type="password" autocomplete="new-password">
+                    <div class="hint">At least 10 characters, with letters and numbers.</div>
+                </div>
+                <div class="field">
+                    <label for="naRole">Role</label>
+                    <select id="naRole">
+                        <option value="admin">Admin — works leads</option>
+                        <option value="superadmin">Super Admin — also manages accounts</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="naActive">Status</label>
+                    <select id="naActive">
+                        <option value="true">Active</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-primary" id="naSubmit" onclick="createAdmin()">Create administrator</button>
+            <p style="font-size:0.76rem;color:#aaa;margin-top:0.7rem">
+                Share the temporary password with them over a channel other than email, and ask them to
+                change it from this dashboard after their first sign-in.
+            </p>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn-secondary" onclick="loadAdmins()">↻ Refresh</button>
+            <div class="spacer"></div>
+            <span style="font-size:0.8rem;color:#aaa" id="adminCount"></span>
+        </div>
+
+        <div class="table-card">
+            <div class="state-box" id="adminsLoading"><div class="spinner"></div>Loading administrators...</div>
+            <div class="state-box" id="adminsEmpty" style="display:none">No administrators found.</div>
+            <table id="adminsTable" style="display:none">
+                <thead><tr>
+                    <th>Name</th><th>Username</th><th>Email</th>
+                    <th>Role</th><th>Status</th><th>Last login</th><th></th>
+                </tr></thead>
+                <tbody id="adminsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
 </div><!-- /container -->
 
 <!-- LEAD DETAIL MODAL -->
@@ -305,10 +398,27 @@
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
 // ── Auth guard ──────────────────────────────────────────
-const token = localStorage.getItem('adminToken');
-const user  = JSON.parse(localStorage.getItem('adminUser') || '{}');
+// The token is the only thing that grants access; this check just avoids
+// rendering an empty dashboard. Every endpoint behind it is enforced server-side.
+let token = localStorage.getItem('adminToken');
+let user  = JSON.parse(localStorage.getItem('adminUser') || '{}');
 if (!token) window.location.href = 'admin-login';
 document.getElementById('userName').textContent = user.fullName || user.username || 'Admin';
+
+// Account management is a Super Admin power. Hiding the tab is a convenience;
+// the server refuses the calls either way.
+if (user.role === 'superadmin') {
+    document.getElementById('adminsTabBtn').style.display = '';
+}
+
+// Sends the admin back to the login page with a reason, after clearing the
+// stored session so a dead token is not retried on every page load.
+function endSession(reason) {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
+    const query = reason ? ('?reason=' + encodeURIComponent(reason)) : '';
+    window.location.href = 'admin-login' + query;
+}
 
 // ── Socket.IO ───────────────────────────────────────────
 const socket = io(HSD_CONFIG.apiBaseUrl || window.location.origin);
@@ -338,6 +448,7 @@ function switchTab(id, btn) {
     btn.classList.add('active');
     if (id === 'logs') loadLogs();
     if (id === 'reviews') loadReviews();
+    if (id === 'admins') loadAdmins();
 }
 
 // ── Toast ────────────────────────────────────────────────
@@ -353,14 +464,40 @@ function showToast(title, body) {
 }
 
 // ── API helper ───────────────────────────────────────────
-function api(url, opts = {}) {
-    return fetch(HSD_CONFIG.apiUrl(url), { ...opts, headers: { 'Authorization': `Bearer ${token}`, ...(opts.headers || {}) } });
+// Returns the parsed body. A 401 ends the session here rather than in each of
+// the dozen callers, which previously just swallowed it and showed an empty table.
+async function api(url, opts = {}) {
+    const res = await fetch(HSD_CONFIG.apiUrl(url), {
+        ...opts,
+        headers: { 'Authorization': `Bearer ${token}`, ...(opts.headers || {}) }
+    });
+
+    if (res.status === 401) {
+        const body = await res.json().catch(() => ({}));
+        endSession(body.message || 'Your session has ended. Please log in again.');
+        // Never resolves: the page is navigating away.
+        return new Promise(() => {});
+    }
+
+    const data = await res.json().catch(() => ({}));
+    data._status = res.status;
+    data._ok = res.ok;
+    return data;
+}
+
+/** POST/PATCH helper - sets the JSON content type and serialises the body. */
+function apiSend(url, method, body) {
+    return api(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {})
+    });
 }
 
 // ── Stats ────────────────────────────────────────────────
 async function loadStats() {
     try {
-        const data = await api('/api/leads/stats/summary').then(r => r.json());
+        const data = await api('/api/leads/stats/summary');
         if (!data.success) return;
         document.getElementById('statTotal').textContent = data.data.total;
         document.getElementById('statToday').textContent = data.data.todayCount;
@@ -377,13 +514,19 @@ async function loadLeads() {
     loadEl.style.display = 'block'; emptyEl.style.display = 'none'; tableEl.style.display = 'none';
 
     const p = new URLSearchParams({ limit: 200 });
-    const s = document.getElementById('fStatus').value;
+    const s  = document.getElementById('fStatus').value;
     const pr = document.getElementById('fPriority').value;
+    const q  = document.getElementById('fSearch').value.trim();
+    const [sortBy, sortOrder] = document.getElementById('fSort').value.split(':');
+
     if (s)  p.append('status',   s);
     if (pr) p.append('priority', pr);
+    if (q)  p.append('search',   q);
+    p.append('sortBy', sortBy);
+    p.append('sortOrder', sortOrder);
 
     try {
-        const data = await api(`/api/leads?${p}`).then(r => r.json());
+        const data = await api(`/api/leads?${p}`);
         loadEl.style.display = 'none';
         if (data.success && data.data.length) {
             document.getElementById('leadCount').textContent = `${data.data.length} lead${data.data.length !== 1 ? 's' : ''}`;
@@ -394,6 +537,24 @@ async function loadLeads() {
             document.getElementById('leadCount').textContent = '0 leads';
         }
     } catch { loadEl.textContent = '⚠️ Error loading leads.'; }
+}
+
+// Populated once at start-up from /api/leads/meta/options, so the filter and the
+// per-lead dropdown always match the schema.
+let LEAD_STATUSES = ['New', 'Contacted', 'Under Review', 'Offer Made', 'Closed', 'Not Interested'];
+let LEAD_PRIORITIES = ['High', 'Medium', 'Low'];
+
+async function loadLeadOptions() {
+    try {
+        const data = await api('/api/leads/meta/options');
+        if (!data.success) return;
+        LEAD_STATUSES = data.data.statuses;
+        LEAD_PRIORITIES = data.data.priorities;
+
+        const filter = document.getElementById('fStatus');
+        filter.innerHTML = '<option value="">All Status</option>' +
+            LEAD_STATUSES.map(s => `<option>${esc(s)}</option>`).join('');
+    } catch (e) { console.error('Could not load lead options:', e); }
 }
 
 function buildLeadRow(l) {
@@ -429,7 +590,7 @@ async function loadLogs() {
     loadEl.style.display = 'block'; emptyEl.style.display = 'none'; tableEl.style.display = 'none';
 
     try {
-        const data = await api('/api/admin/logs').then(r => r.json());
+        const data = await api('/api/admin/logs');
         loadEl.style.display = 'none';
 
         if (data.success && data.data.length) {
@@ -463,13 +624,13 @@ let currentId = null;
 async function viewLead(id) {
     currentId = id;
     try {
-        const data = await api(`/api/leads/${id}`).then(r => r.json());
+        const data = await api(`/api/leads/${id}`);
         if (!data.success) return;
         const l = data.data;
         const notes = (l.notes || []).map(n => `
             <div class="note-item">
-                ${esc(n.text || n.content || '')}
-                <div class="note-date">${new Date(n.createdAt).toLocaleString()}</div>
+                ${esc(n.content || n.text || '')}
+                <div class="note-date">${esc(n.createdBy || 'system')} · ${new Date(n.createdAt).toLocaleString()}</div>
             </div>`).join('') || '<p style="color:#bbb;font-size:0.82rem">No notes yet.</p>';
 
         document.getElementById('modalBody').innerHTML = `
@@ -500,12 +661,12 @@ async function viewLead(id) {
             <hr class="sep">
             <div class="status-row">
                 <select id="mStatus">
-                    ${['New','Contacted','Under Review','Offer Made','Closed','Not Interested'].map(s =>
-                        `<option ${s===l.status?'selected':''}>${s}</option>`).join('')}
+                    ${LEAD_STATUSES.map(s =>
+                        `<option ${s===l.status?'selected':''}>${esc(s)}</option>`).join('')}
                 </select>
                 <select id="mPriority">
-                    ${['High','Medium','Low'].map(p =>
-                        `<option ${p===l.priority?'selected':''}>${p}</option>`).join('')}
+                    ${LEAD_PRIORITIES.map(p =>
+                        `<option ${p===l.priority?'selected':''}>${esc(p)}</option>`).join('')}
                 </select>
                 <button class="btn-primary" onclick="updateStatus()">Save</button>
             </div>
@@ -526,13 +687,18 @@ async function updateStatus() {
     const status   = document.getElementById('mStatus').value;
     const priority = document.getElementById('mPriority').value;
     try {
-        const data = await api(`/api/leads/${currentId}/status`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status, priority })
-        }).then(r => r.json());
-        if (data.success) { showToast('✅ Saved', 'Lead status updated.'); loadLeads(); }
-    } catch {}
+        const data = await apiSend(`/api/leads/${currentId}/status`, 'PATCH', { status, priority });
+        if (data.success) {
+            showToast('Saved', 'Lead updated.');
+            loadLeads();
+            loadStats();
+        } else {
+            showToast('Error', data.message || 'Could not update this lead.');
+        }
+    } catch (e) {
+        console.error('Status update failed:', e);
+        showToast('Error', 'Could not reach the server.');
+    }
 }
 
 async function addNote() {
@@ -540,19 +706,22 @@ async function addNote() {
     const text  = input.value.trim();
     if (!text) return;
     try {
-        const data = await api(`/api/leads/${currentId}/notes`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text })
-        }).then(r => r.json());
+        // The API field is 'content'. This sent 'text', so every note was
+        // rejected as empty and the failure was swallowed silently.
+        const data = await apiSend(`/api/leads/${currentId}/notes`, 'POST', { content: text });
         if (data.success) {
             input.value = '';
             const div = document.createElement('div');
             div.className = 'note-item';
-            div.innerHTML = `${esc(text)}<div class="note-date">${new Date().toLocaleString()}</div>`;
+            div.innerHTML = `${esc(text)}<div class="note-date">${esc(user.username || 'you')} · ${new Date().toLocaleString()}</div>`;
             document.getElementById('notesList').appendChild(div);
+        } else {
+            showToast('Error', data.message || 'Could not save that note.');
         }
-    } catch {}
+    } catch (e) {
+        console.error('Add note failed:', e);
+        showToast('Error', 'Could not reach the server.');
+    }
 }
 
 function closeModal() {
@@ -563,7 +732,18 @@ function closeModal() {
 document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
 
 // ── Logout ────────────────────────────────────────────────
-function logout() {
+async function logout() {
+    // Clearing localStorage alone leaves the token valid for the rest of its
+    // eight hours. This tells the API to reject it from now on.
+    try {
+        await fetch(HSD_CONFIG.apiUrl('/api/admin/logout'), {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    } catch (e) {
+        // Offline or the API is down. Still clear the local session.
+        console.error('Logout call failed:', e);
+    }
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminUser');
     window.location.href = 'admin-login';
@@ -577,7 +757,7 @@ function stars(n) {
 
 async function refreshPendingBadge() {
     try {
-        const data = await api('/api/testimonials/admin?status=pending').then(r => r.json());
+        const data = await api('/api/testimonials/admin?status=pending');
         if (!data.success) return;
         const n = data.counts ? data.counts.pending : 0;
         const badge = document.getElementById('pendingBadge');
@@ -593,7 +773,7 @@ async function loadReviews() {
     const status = document.getElementById('fReviewStatus').value;
 
     try {
-        const data = await api(`/api/testimonials/admin?status=${status}`).then(r => r.json());
+        const data = await api(`/api/testimonials/admin?status=${status}`);
         loadEl.style.display = 'none';
 
         if (data.counts) {
@@ -634,12 +814,7 @@ function buildReviewRow(t) {
 
 async function setReviewApproval(id, approved) {
     try {
-        const res = await api(`/api/testimonials/${id}/approve`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ approved })
-        });
-        const data = await res.json();
+        const data = await apiSend(`/api/testimonials/${id}/approve`, 'PATCH', { approved });
         if (data.success) {
             showToast(approved ? 'Approved' : 'Unapproved', approved ? 'Review is now public.' : 'Review hidden from the public page.');
             loadReviews();
@@ -652,11 +827,151 @@ async function setReviewApproval(id, approved) {
 async function deleteReview(id) {
     if (!confirm('Delete this review permanently? This cannot be undone.')) return;
     try {
-        const res = await api(`/api/testimonials/${id}`, { method: 'DELETE' });
-        const data = await res.json();
+        const data = await api(`/api/testimonials/${id}`, { method: 'DELETE' });
         if (data.success) { showToast('Deleted', 'Review removed.'); loadReviews(); }
         else showToast('Error', data.message || 'Could not delete the review.');
     } catch { showToast('Error', 'Could not reach the server.'); }
+}
+
+// ── Admin management (Super Admin only) ───────────────────
+
+function adminNote(message, kind) {
+    const box = document.getElementById('adminFormNote');
+    box.textContent = message;
+    box.className = 'form-note ' + kind;
+}
+
+async function loadAdmins() {
+    const [loadEl, emptyEl, tableEl, tbody] =
+        ['adminsLoading','adminsEmpty','adminsTable','adminsBody'].map(id => document.getElementById(id));
+    loadEl.style.display = 'block'; emptyEl.style.display = 'none'; tableEl.style.display = 'none';
+
+    try {
+        const data = await api('/api/admin/list');
+        loadEl.style.display = 'none';
+
+        if (!data.success) {
+            loadEl.style.display = 'block';
+            loadEl.textContent = data.message || 'Could not load administrators.';
+            return;
+        }
+
+        if (data.data.length) {
+            document.getElementById('adminCount').textContent =
+                `${data.data.length} account${data.data.length !== 1 ? 's' : ''}`;
+            tableEl.style.display = 'table';
+            tbody.innerHTML = data.data.map(buildAdminRow).join('');
+        } else {
+            emptyEl.style.display = 'block';
+            document.getElementById('adminCount').textContent = '0 accounts';
+        }
+    } catch (e) {
+        console.error('Load admins failed:', e);
+        loadEl.textContent = 'Error loading administrators.';
+    }
+}
+
+function buildAdminRow(a) {
+    const isSelf = String(a.id) === String(user.id);
+    const rolePill = a.role === 'superadmin'
+        ? '<span class="role-pill super">Super Admin</span>'
+        : '<span class="role-pill">Admin</span>';
+    const statusBadge = a.isActive
+        ? '<span class="badge badge-success">Active</span>'
+        : '<span class="badge badge-fail">Disabled</span>';
+    const lastLogin = a.lastLogin ? new Date(a.lastLogin).toLocaleString() : 'Never';
+
+    // No self-service disable or demote: the API refuses both, so do not offer
+    // buttons that can only fail.
+    const actions = isSelf
+        ? '<span class="review-meta">This is you</span>'
+        : `<button class="btn-secondary" onclick="toggleAdmin('${a.id}')">${a.isActive ? 'Disable' : 'Enable'}</button>
+           <button class="btn-secondary" onclick="changeRole('${a.id}', '${a.role === 'superadmin' ? 'admin' : 'superadmin'}')">${a.role === 'superadmin' ? 'Make Admin' : 'Make Super'}</button>
+           <button class="btn-danger" onclick="resetAdminPassword('${a.id}', '${esc(a.username)}')">Reset password</button>`;
+
+    return `<tr>
+        <td><strong>${esc(a.fullName)}</strong></td>
+        <td>${esc(a.username)}</td>
+        <td>${esc(a.email)}</td>
+        <td>${rolePill}</td>
+        <td>${statusBadge}</td>
+        <td class="log-time">${esc(lastLogin)}</td>
+        <td style="white-space:nowrap">${actions}</td>
+    </tr>`;
+}
+
+async function createAdmin() {
+    const btn = document.getElementById('naSubmit');
+    const payload = {
+        fullName: document.getElementById('naFullName').value.trim(),
+        email:    document.getElementById('naEmail').value.trim(),
+        username: document.getElementById('naUsername').value.trim(),
+        password: document.getElementById('naPassword').value,
+        role:     document.getElementById('naRole').value,
+        isActive: document.getElementById('naActive').value === 'true'
+    };
+
+    if (!payload.fullName || !payload.email || !payload.username || !payload.password) {
+        return adminNote('Full name, email, username and password are all required.', 'err');
+    }
+
+    btn.disabled = true;
+    adminNote('Creating…', 'ok');
+
+    try {
+        const data = await apiSend('/api/admin/create', 'POST', payload);
+        if (data.success) {
+            adminNote(`${data.admin.fullName} can now sign in as "${data.admin.username}".`, 'ok');
+            ['naFullName','naEmail','naUsername','naPassword'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            loadAdmins();
+        } else {
+            adminNote(data.message || 'Could not create that account.', 'err');
+        }
+    } catch (e) {
+        console.error('Create admin failed:', e);
+        adminNote('Could not reach the server.', 'err');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function toggleAdmin(id) {
+    try {
+        const data = await api(`/api/admin/${id}/toggle`, { method: 'PATCH' });
+        if (data.success) { showToast('Updated', data.message); loadAdmins(); }
+        else showToast('Not changed', data.message || 'Could not update that account.');
+    } catch (e) {
+        console.error('Toggle admin failed:', e);
+        showToast('Error', 'Could not reach the server.');
+    }
+}
+
+async function changeRole(id, newRole) {
+    const label = newRole === 'superadmin' ? 'Super Admin' : 'Admin';
+    if (!confirm(`Change this account's role to ${label}?`)) return;
+    try {
+        const data = await apiSend(`/api/admin/${id}`, 'PATCH', { role: newRole });
+        if (data.success) { showToast('Updated', `Role changed to ${label}.`); loadAdmins(); }
+        else showToast('Not changed', data.message || 'Could not change that role.');
+    } catch (e) {
+        console.error('Change role failed:', e);
+        showToast('Error', 'Could not reach the server.');
+    }
+}
+
+async function resetAdminPassword(id, username) {
+    const pw = prompt(`New password for "${username}" (at least 10 characters, letters and numbers):`);
+    if (!pw) return;
+    try {
+        const data = await apiSend(`/api/admin/${id}/password`, 'PATCH', { newPassword: pw });
+        if (data.success) showToast('Password set', data.message);
+        else showToast('Not changed', data.message || 'Could not set that password.');
+    } catch (e) {
+        console.error('Reset password failed:', e);
+        showToast('Error', 'Could not reach the server.');
+    }
 }
 
 // ── XSS escape ────────────────────────────────────────────
@@ -666,9 +981,20 @@ function esc(s) {
 }
 
 // ── Bootstrap ─────────────────────────────────────────────
-loadStats();
-loadLeads();
-refreshPendingBadge();
+// Typing in the search box refetches, but only once the visitor pauses.
+let searchTimer;
+document.getElementById('fSearch').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(loadLeads, 300);
+});
+
+(async function start() {
+    // Options first so the status filter is populated before the first fetch.
+    await loadLeadOptions();
+    loadStats();
+    loadLeads();
+    refreshPendingBadge();
+})();
 </script>
 </body>
 </html>

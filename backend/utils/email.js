@@ -32,7 +32,8 @@ function resendFrom() {
 async function sendViaResend(options) {
     const payload = {
         from: resendFrom(),
-        to: [options.to],
+        // Resend takes an array, so several recipients cost one API call.
+        to: Array.isArray(options.to) ? options.to : [options.to],
         subject: options.subject,
         text: options.text
     };
@@ -91,7 +92,12 @@ async function sendViaSmtp(options) {
     const transporter = createTransporter();
     if (!transporter) return null;
 
-    const info = await transporter.sendMail(options);
+    // Nodemailer accepts an array too, but normalising here keeps the log line
+    // in sendEmail identical across both transports.
+    const info = await transporter.sendMail({
+        ...options,
+        to: Array.isArray(options.to) ? options.to.join(', ') : options.to
+    });
     return info.messageId;
 }
 
@@ -101,6 +107,12 @@ async function sendViaSmtp(options) {
  */
 const sendEmail = async (options) => {
     const via = usingResend() ? 'Resend' : 'SMTP';
+    const recipients = Array.isArray(options.to) ? options.to.join(', ') : options.to;
+
+    if (!recipients) {
+        console.error('Email not sent: no recipient configured. Set LEAD_NOTIFICATION_EMAIL.');
+        return false;
+    }
 
     try {
         const id = usingResend()
@@ -109,11 +121,11 @@ const sendEmail = async (options) => {
 
         if (!id) return false;
 
-        console.log(`📧 Email sent via ${via} to ${options.to}: ${id}`);
+        console.log(`📧 Email sent via ${via} to ${recipients}: ${id}`);
         return true;
 
     } catch (error) {
-        console.error(`❌ Error sending email via ${via} to ${options.to}:`, error.message);
+        console.error(`❌ Error sending email via ${via} to ${recipients}:`, error.message);
 
         if (via === 'Resend') {
             if (error.status === 401 || error.status === 403) {
@@ -133,6 +145,41 @@ const sendEmail = async (options) => {
         return false;
     }
 };
+
+// ===========================
+// NOTIFICATION RECIPIENTS
+// ===========================
+// LEAD_NOTIFICATION_EMAIL is the address (or comma-separated addresses) that new
+// seller leads are sent to. It is separate from ADMIN_EMAIL on purpose:
+// ADMIN_EMAIL is the login identity of the bootstrap admin account, and the
+// person who receives leads is not necessarily the person who signs in.
+//
+// ADMIN_EMAIL is still honoured as a fallback so nothing stops working before
+// LEAD_NOTIFICATION_EMAIL is set on Render.
+
+function parseRecipients(raw) {
+    return String(raw || '')
+        .split(',')
+        .map((address) => address.trim())
+        .filter((address) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(address));
+}
+
+/**
+ * Everyone who should be told about a new lead. Returns [] when nothing is
+ * configured, and callers skip sending rather than guessing an address.
+ */
+function getLeadNotificationRecipients() {
+    const configured = parseRecipients(process.env.LEAD_NOTIFICATION_EMAIL);
+    if (configured.length) return configured;
+    return parseRecipients(process.env.ADMIN_EMAIL);
+}
+
+/** Recipients for contact-form messages. Falls back to the lead recipients. */
+function getContactRecipients() {
+    const configured = parseRecipients(process.env.CONTACT_NOTIFICATION_EMAIL);
+    if (configured.length) return configured;
+    return getLeadNotificationRecipients();
+}
 
 /**
  * Sends confirmation email to the seller
@@ -154,14 +201,47 @@ const sendLeadConfirmation = async (lead) => {
  * Sends notification email to the admin
  */
 const sendAdminNotification = async (lead) => {
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (!adminEmail) return;
+    const recipients = getLeadNotificationRecipients();
+    if (!recipients.length) {
+        console.error('New lead notification not sent: set LEAD_NOTIFICATION_EMAIL.');
+        return false;
+    }
+
+    // Deliberately only seller and property details. No credentials, no internal
+    // configuration, nothing from the tracking payload beyond what the seller
+    // typed themselves.
+    const lines = [
+        'New seller lead from the website.',
+        '',
+        `Name:            ${lead.fullName}`,
+        `Phone:           ${lead.phone}`,
+        `Email:           ${lead.email || 'Not provided'}`,
+        `Preferred:       ${lead.preferredContact || 'Not specified'}`,
+        '',
+        `Property:        ${lead.propertyAddress}`,
+        `Type:            ${lead.propertyType || 'Not specified'}`,
+        `Condition:       ${lead.propertyCondition || 'Not specified'}`,
+        `Bed / Bath:      ${lead.bedrooms ?? '-'} / ${lead.bathrooms ?? '-'}`,
+        `Mortgage owed:   ${lead.oweMortgage || 'Not specified'}`,
+        '',
+        `Reason selling:  ${lead.sellingReason || 'Not specified'}`,
+        `Timeframe:       ${lead.timeframe || 'Not specified'}`,
+        `SMS consent:     ${lead.smsConsent ? 'Yes' : 'No'}`,
+        lead.additionalInfo ? `Additional:      ${lead.additionalInfo}` : '',
+        '',
+        `Submitted:       ${new Date(lead.submittedAt || Date.now()).toLocaleString('en-US', { timeZone: 'America/Detroit' })} (Detroit)`,
+        `Lead reference:  ${lead._id}`,
+        '',
+        'Open the admin dashboard to update the status or add notes.'
+    ];
 
     const message = {
         from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-        to: adminEmail,
-        subject: `🔔 New Lead: ${lead.propertyAddress}`,
-        text: `New lead received!\n\nName: ${lead.fullName}\nPhone: ${lead.phone}\nEmail: ${lead.email}\nAddress: ${lead.propertyAddress}\nSelling Reason: ${lead.sellingReason}\n\nLogin to the dashboard to view full details.`
+        to: recipients,
+        // Replying to the notification answers the seller directly.
+        replyTo: lead.email || undefined,
+        subject: `New Lead: ${lead.fullName} - ${lead.propertyAddress}`,
+        text: lines.join('\n')
     };
 
     return sendEmail(message);
@@ -172,15 +252,15 @@ const sendAdminNotification = async (lead) => {
  * replyTo is the visitor's address so hitting Reply answers them directly.
  */
 const sendContactMessage = async (contact) => {
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (!adminEmail) {
-        console.error('❌ Contact form: ADMIN_EMAIL is not set, message not delivered');
+    const recipients = getContactRecipients();
+    if (!recipients.length) {
+        console.error('❌ Contact form: no recipient configured. Set LEAD_NOTIFICATION_EMAIL.');
         return false;
     }
 
     const message = {
         from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-        to: adminEmail,
+        to: recipients,
         replyTo: contact.email,
         subject: `📨 Contact form: ${contact.name}`,
         text: `New message from the website contact form.\n\nName: ${contact.name}\nEmail: ${contact.email}\n${contact.phone ? `Phone: ${contact.phone}\n` : ''}Received: ${new Date().toLocaleString()}\n\nMessage:\n${contact.message}\n\nReply to this email to respond directly to the sender.`
@@ -209,5 +289,7 @@ module.exports = {
     sendLeadConfirmation,
     sendAdminNotification,
     sendContactMessage,
-    sendContactAcknowledgement
+    sendContactAcknowledgement,
+    getLeadNotificationRecipients,
+    getContactRecipients
 };

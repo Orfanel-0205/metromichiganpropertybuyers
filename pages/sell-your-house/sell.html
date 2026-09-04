@@ -310,9 +310,11 @@
                         <!-- Error Message (hidden by default) -->
                         <div id="errorMessage" class="error-message" style="display: none;">
                             <div class="error-icon">✕</div>
-                            <h2>Oops! Something went wrong</h2>
-                            <p id="errorText">Please try again or contact us directly at (517) 500-8870</p>
-                            <button class="btn btn-primary" onclick="location.reload()">Try Again</button>
+                            <h2>We couldn&rsquo;t submit that</h2>
+                            <p id="errorText">Please try again, or call us at (517) 500-8870.</p>
+                            <!-- Dismiss rather than reload: the form is still on screen with the
+                                 seller's answers in it, and reloading would discard them. -->
+                            <button class="btn btn-primary" onclick="document.getElementById('errorMessage').style.display='none'">Try Again</button>
                         </div>
                     </div>
                 </div>
@@ -356,7 +358,7 @@
 
     <script src="/assets/js/config.js"></script>
     <script src="./assets/js/Main.js"></script>
-    <script src="./assets/js/Form.js"></script>
+    <script src="/assets/js/Form.js"></script>
     <script src="/assets/js/chat-widget.js" defer></script>
 </body>
 </html>
