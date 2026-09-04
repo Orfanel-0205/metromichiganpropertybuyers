@@ -19,7 +19,7 @@
 (function () {
     'use strict';
 
-    var PRODUCTION_API_BASE_URL = 'https://cash-home-buyer-website.onrender.com';
+    var PRODUCTION_API_BASE_URL = 'https://metromichiganpropertybuyers.com';
 
     var LOCAL_API_BASE_URL = 'http://localhost:5000';
 
